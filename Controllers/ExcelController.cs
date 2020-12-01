@@ -1,5 +1,4 @@
 ﻿using BAExcelExport.ExcelExport;
-using BAExcelExport.Models;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
@@ -25,37 +24,27 @@ namespace BAExcelExport.Controllers
         {
             var dataInput = DataHelper.GenerateData(MAX_RECORD);
 
-            var exportExcel = new DataExport();
+
+            ReportSourceTemplate<ReportDataModel> template = new ReportSourceTemplate<ReportDataModel>()
+            {
+                FileName = typeof(ReportDataModel).Name,
+                SheetName = "SheetName",
+                ReportList = dataInput,
+                SettingColumns = null,
+            };
+
 
             Stopwatch sw = new Stopwatch();
             sw.Start();
 
-            var resultContent = exportExcel.Export(dataInput, typeof(ReportDataModel).Name, "ReportSummary");
+            var resultContent = ReportHelper.GenerateReport(template);
+
+            string fileName = ReportHelper.GetFileName(template.FileName);
 
             sw.Stop();
 
-            return File(resultContent.Content.ReadAsByteArrayAsync().Result, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", sw.ElapsedMilliseconds + "_" + exportExcel.FileName);
+            return File(resultContent.Content.ReadAsByteArrayAsync().Result, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", sw.ElapsedMilliseconds + "_" + fileName);
         }
 
-        // GET api/Excel/excelExportOld
-        [HttpGet]
-        [Route("excelExportOld")]
-        public ActionResult ExcelExportOld()
-        {
-            var dataInput = DataHelper.GenerateData(MAX_RECORD);
-
-            var exportExcel = new DataExport();
-
-            Stopwatch sw = new Stopwatch();
-            sw.Start();
-
-            var resultContent = exportExcel.Export(dataInput, typeof(ReportDataModel).Name + "OLD", "ReportSummaryOld");
-
-            sw.Stop();
-
-            Console.WriteLine($"Thời gian thực hiện{sw.ElapsedMilliseconds} mili giây.");
-
-            return File(resultContent.Content.ReadAsByteArrayAsync().Result, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", sw.ElapsedMilliseconds + "_" + exportExcel.FileName);
-        }
     }
 }

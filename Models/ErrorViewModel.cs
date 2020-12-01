@@ -1,6 +1,6 @@
 using System;
 
-namespace BAExcelExport.Models
+namespace BAExcelExport
 {
     public class ErrorViewModel
     {

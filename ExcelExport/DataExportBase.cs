@@ -2,30 +2,54 @@
 using NPOI.XSSF.UserModel;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Reflection;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace BAExcelExport.ExcelExport
 {
-    public interface IAbstractDataExport
-    {
-        HttpResponseMessage Export<T>(List<T> exportData, string fileName, string sheetName);
-    }
-
-
-    public abstract class DataExportBase : IAbstractDataExport
+    public abstract class DataExportBase<TEntity> where TEntity:class
     {
         protected string _sheetName;
         protected string _fileName;
-        protected List<string> _headers;
-        protected List<string> _type;
-        protected IWorkbook _workbook;
-        protected ISheet _sheet;
-        private const string DefaultSheetName = "Sheet1";
+        private const string DefaultSheetName = "BAGPS";
+
+        /// <summary>
+        /// Danh sách cột cấu hình
+        /// </summary>
+        private List<ColumnInfo> _SettingColumns = null;
+
+        protected List<ColumnInfo> SettingColumns
+        {
+            get
+            {
+                if (_SettingColumns == null || _SettingColumns.Count == 0)
+                {
+                    _SettingColumns = new List<ColumnInfo>();
+
+                    PropertyInfo[] propertyInfos = typeof(TEntity).GetProperties();
+
+                    foreach (PropertyInfo prop in propertyInfos)
+                    {
+                        _SettingColumns.Add(new ColumnInfo()
+                        {
+                            ColumnName = prop.Name,
+                            Caption = Regex.Replace(prop.Name, "([A-Z])", " $1").Trim(),
+                            ColumnType = Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType
+
+                        });
+                    }
+                }
+
+                return _SettingColumns;
+            }
+        }
 
         public string FileName
         {
@@ -35,36 +59,88 @@ namespace BAExcelExport.ExcelExport
             }
         }
 
-        public HttpResponseMessage Export<T>(List<T> exportData, string fileName, string sheetName = DefaultSheetName)
+        public DataExportBase(List<TEntity> data, List<ColumnInfo> settingColumns, string fileName, string sheetName = DefaultSheetName)
         {
             _fileName = fileName;
             _sheetName = sheetName;
+            this.dataSource = data;
+            this._SettingColumns = settingColumns;
+        }
 
-            _workbook = new XSSFWorkbook();
-            _sheet = _workbook.CreateSheet(_sheetName);
+        /// <summary>
+        /// Nguồn dữ liệu
+        /// </summary>
+        protected List<TEntity> dataSource { get; set; }
 
-            var headerStyle = _workbook.CreateCellStyle();
-            headerStyle.Alignment = HorizontalAlignment.Center;
-            var headerFont = _workbook.CreateFont();
-            headerFont.IsBold = true;
-            headerStyle.SetFont(headerFont);
+        protected ICellStyle CreateCellStyle(IWorkbook workbook, HorizontalAlignment hAlign, VerticalAlignment vAlign)
+        {
+            return CreateCellStyle(workbook, hAlign, vAlign, false);
+        }
 
-            WriteData(exportData);
+        protected ICellStyle CreateCellStyle(IWorkbook workbook, HorizontalAlignment hAlign, VerticalAlignment vAlign, bool isBold)
+        {
+            ICellStyle cellStyle = workbook.CreateCellStyle();
+            cellStyle.Alignment = hAlign;
+            cellStyle.VerticalAlignment = vAlign;
 
-            //Header
-            var header = _sheet.CreateRow(0);
-            for (var i = 0; i < _headers.Count; i++)
+            if (isBold)
             {
-                var cell = header.CreateCell(i);
-                cell.SetCellValue(_headers[i]);
-                cell.CellStyle = headerStyle;
-                // It's heavy, it slows down your Excel if you have large data                
-                _sheet.AutoSizeColumn(i);
+                var headerFont = workbook.CreateFont();
+                headerFont.IsBold = true;
+                cellStyle.SetFont(headerFont);
             }
+
+            return cellStyle;
+        }
+
+        protected void AutoSizeColumn(ISheet sheet, bool autosize = false)
+        {
+            // It's heavy, it slows down your Excel if you have large data           
+            if (autosize)
+            {
+                for (var i = 0; i < SettingColumns.Count; i++)
+                {
+
+                    sheet.AutoSizeColumn(i);
+                }
+            }
+        }
+
+        protected abstract void RenderHeader(ISheet sheet, ICellStyle headerStyle);
+
+        
+        protected abstract void RenderBody(IWorkbook workbook, ISheet sheet);
+        
+
+        protected virtual void RenderSummary()
+        {
+
+        }
+
+        protected virtual void RenderFooter()
+        {
+
+        }
+
+        public HttpResponseMessage RenderReport()
+        {
+            IWorkbook workbook = new XSSFWorkbook();
+            ISheet sheet = workbook.CreateSheet(_sheetName);
+
+            ICellStyle headerStyle = CreateCellStyle(workbook, HorizontalAlignment.Center, VerticalAlignment.Center, true);
+
+            this.RenderHeader(sheet, headerStyle);
+
+            this.RenderBody(workbook, sheet);
+
+            this.RenderSummary();
+            this.RenderFooter();
+
+            this.AutoSizeColumn(sheet, true);
 
             using (var memoryStream = new MemoryStream())
             {
-                _workbook.Write(memoryStream);
+                workbook.Write(memoryStream);
                 var response = new HttpResponseMessage(HttpStatusCode.OK)
                 {
                     Content = new ByteArrayContent(memoryStream.ToArray())
@@ -77,9 +153,23 @@ namespace BAExcelExport.ExcelExport
         }
 
         /// <summary>
-        /// Generic Definition to handle all types of List
+        /// Tính toán lại độ rộng của cột.
         /// </summary>
-        /// <param name="exportData"></param>
-        public abstract void WriteData<T>(List<T> exportData);
+        /// <Modified>
+        /// Name     Date         Comments
+        /// trungtq  27/02/2015   created
+        /// </Modified>
+        protected virtual void CalculateColumnWidth()
+        {
+        }
+
+        public HttpResponseMessage Export()
+        {
+            // Tính lại độ rộng của cột
+            this.CalculateColumnWidth();
+
+            // Chạy báo cáo
+            return this.RenderReport();
+        }
     }
 }
