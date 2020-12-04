@@ -147,6 +147,32 @@ namespace BAExcelExport
             }
         }
 
+        protected void ProcessSettingColumns(List<ColumnInfo> columnInfos)
+        {
+            if (columnInfos != null && columnInfos.Count > 0)
+            {
+                this.SettingColumns = columnInfos;
+            }
+            else
+            {
+                columnInfos = new List<ColumnInfo>();
+                PropertyInfo[] propertyInfos = typeof(TEntity).GetProperties();
+
+                foreach (PropertyInfo prop in propertyInfos)
+                {
+                    columnInfos.Add(new ColumnInfo()
+                    {
+                        ColumnName = prop.Name,
+                        Caption = Regex.Replace(prop.Name, "([A-Z])", " $1").Trim(),
+                        ColumnType = Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType
+
+                    });
+                }
+
+                this.SettingColumns = columnInfos;
+            }
+        }
+
         public ExcelExportBase(TSourceTemplate template)
         {
             this.SourceTemplate = template;
@@ -154,10 +180,10 @@ namespace BAExcelExport
             this.FileName = template.FileName;
             this.SheetName = template.SheetName ?? DefaultSheetName;
             this.DataSource = template.ReportList;
-            this.SettingColumns = template.SettingColumns;
             this.ReportTitle = template.ReportTitle;
             this.ReportSubtitleLevel1 = template.ReportSubtitleLevel1;
             this.ReportSubtitleLevel2 = template.ReportSubtitleLevel2;
+            this.ProcessSettingColumns(template.SettingColumns);
         }
 
         protected ICellStyle CreateCellStyle(HorizontalAlignment hAlign, VerticalAlignment vAlign, string fontName, double fontSize, bool isBold = false)

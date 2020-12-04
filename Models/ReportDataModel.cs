@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace BAExcelExport.Models
+namespace BAExcelExport
 {
-    public class ReportDataModel
+    public class ReportDataModel:ReportDataModelBase
     {
         public int OrderNumber { get; set; }
 

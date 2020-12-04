@@ -22,32 +22,29 @@ namespace BAExcelExport
             if (!string.IsNullOrEmpty(this.ReportTitle))
             {
                 IRow row = this.Sheet.CreateRow(0);
-
-                for (int i = 0; i < this.SettingColumns.Count; i++)
-                {
-                    ICell cell = row.CreateCell(i);
-                    cell.SetCellValue(this.ReportTitle);
-                }
+                ICell cell = row.CreateCell(0);
+                cell.CellStyle.WrapText = true;
+                cell.SetCellValue(this.ReportTitle);
+                var cra = new NPOI.SS.Util.CellRangeAddress(0, 0, 0, SettingColumns.Count);
+                this.Sheet.AddMergedRegion(cra);
             }
             if (!string.IsNullOrEmpty(this.ReportSubtitleLevel1))
             {
-                IRow row = this.Sheet.CreateRow(0);
-
-                for (int i = 0; i < this.SettingColumns.Count; i++)
-                {
-                    ICell cell = row.CreateCell(i);
-                    cell.SetCellValue(this.ReportSubtitleLevel1);
-                }
+                IRow row = this.Sheet.CreateRow(1);
+                ICell cell = row.CreateCell(0);
+                cell.CellStyle.WrapText = true;
+                var cra = new NPOI.SS.Util.CellRangeAddress(1, 1, 0, SettingColumns.Count);
+                cell.SetCellValue(this.ReportSubtitleLevel1);
+                this.Sheet.AddMergedRegion(cra);
             }
             if (!string.IsNullOrEmpty(this.ReportSubtitleLevel2))
             {
-                IRow row = this.Sheet.CreateRow(0);
-
-                for (int i = 0; i < this.SettingColumns.Count; i++)
-                {
-                    ICell cell = row.CreateCell(i);
-                    cell.SetCellValue(this.ReportSubtitleLevel2);
-                }
+                IRow row = this.Sheet.CreateRow(2);
+                ICell cell = row.CreateCell(0);
+                cell.CellStyle.WrapText = true;
+                var cra = new NPOI.SS.Util.CellRangeAddress(2, 2, 0, SettingColumns.Count);
+                cell.SetCellValue(this.ReportSubtitleLevel2);
+                this.Sheet.AddMergedRegion(cra);
             }
         }
 
@@ -79,7 +76,9 @@ namespace BAExcelExport
                         // Kiểm tra giá trị có là số không?
                         if (cellvalue.IsNumeric())
                         {
-                            cellRow.SetCellValue(string.Format(new CultureInfo("en-US"), "{0:" + formatPart + "}", cellvalue));
+                            //cellRow.SetCellValue(string.Format(new CultureInfo("en-US"), "{0:" + formatPart + "}", cellvalue));
+                            cellRow.SetCellType(CellType.Numeric);
+                            cellRow.SetCellValue(cellvalue.ToString());
                         }
                         else
                         {
