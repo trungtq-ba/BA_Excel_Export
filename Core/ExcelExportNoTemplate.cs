@@ -65,7 +65,7 @@ namespace BAExcelExport
 
             for (int i = 0; i < this.DataSource.Count; i++)
             {
-                sheetRow = this.Sheet.CreateRow(i + 1);
+                sheetRow = this.Sheet.CreateRow(StartLoopRowIndex+i);
 
                 for (int j = 0; j < propertyInfos.Length; j++)
                 {
@@ -76,7 +76,6 @@ namespace BAExcelExport
 
                     if (cellvalue != null)
                     {
-
                         // Kiểm tra giá trị có là số không?
                         if (cellvalue.IsNumeric())
                         {

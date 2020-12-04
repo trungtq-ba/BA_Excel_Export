@@ -94,24 +94,24 @@ namespace BAExcelExport
         /// <summary>
         /// Tiêu đề của báo cáo
         /// </summary>
-        public string ReportTitle { get; set; }
+        protected string ReportTitle { get; set; }
 
         /// <summary>
         /// Noi dung: Nội dung: Thời gian vi phạm trên {Minutes} phút
         /// </summary>
-        public string ReportSubtitleLevel1 { get; set; }
+        protected string ReportSubtitleLevel1 { get; set; }
 
         /// <summary>
         /// Ngày báo cáo
         /// </summary>
-        public string ReportSubtitleLevel2 { get; set; }
+        protected string ReportSubtitleLevel2 { get; set; }
 
-        public int _StartLoopRowIndex = -1;
+        private int _StartLoopRowIndex = -1;
 
         /// <summary>
         /// Dòng đầu tiên bind dữ liệu bảng
         /// </summary>
-        public int StartLoopRowIndex
+        protected int StartLoopRowIndex
         {
             get
             {
@@ -139,7 +139,7 @@ namespace BAExcelExport
         /// <summary>
         /// Dòng cuối cùng bind dữ liệu bảng
         /// </summary>
-        public int EndLoopRowIndex
+        protected int EndLoopRowIndex
         {
             get
             {

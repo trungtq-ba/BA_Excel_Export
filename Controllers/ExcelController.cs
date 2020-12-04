@@ -36,26 +36,5 @@ namespace BAExcelExport.Controllers
 
             return File(resultContent.Content.ReadAsByteArrayAsync().Result, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", sw.ElapsedMilliseconds + "_" + exportExcel.FileName);
         }
-
-        // GET api/Excel/excelExportOld
-        [HttpGet]
-        [Route("excelExportOld")]
-        public ActionResult ExcelExportOld()
-        {
-            var dataInput = DataHelper.GenerateData(MAX_RECORD);
-
-            var exportExcel = new DataExport();
-
-            Stopwatch sw = new Stopwatch();
-            sw.Start();
-
-            var resultContent = exportExcel.Export(dataInput, typeof(ReportDataModel).Name + "OLD", "ReportSummaryOld");
-
-            sw.Stop();
-
-            Console.WriteLine($"Thời gian thực hiện{sw.ElapsedMilliseconds} mili giây.");
-
-            return File(resultContent.Content.ReadAsByteArrayAsync().Result, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", sw.ElapsedMilliseconds + "_" + exportExcel.FileName);
-        }
     }
 }
