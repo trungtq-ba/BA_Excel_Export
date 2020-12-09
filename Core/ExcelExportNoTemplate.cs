@@ -29,28 +29,28 @@ namespace BAExcelExport
         {
             if (!string.IsNullOrEmpty(this.ReportTitle))
             {
-                IRow row = this.Sheet.CreateRow(0);
+                IRow row = this.Sheet.CreateRow(this.Sheet.LastRowNum);
                 ICell cell = row.CreateCell(0);
                 cell.CellStyle = this.CreateCellStyleReportTitle();
                 cell.SetCellValue(this.ReportTitle);
-                var cra = new NPOI.SS.Util.CellRangeAddress(0, 0, 0, SettingColumns.Count);
+                var cra = new NPOI.SS.Util.CellRangeAddress(0, 0, 0, this.SettingColumns.Count);
                 this.Sheet.AddMergedRegion(cra);
             }
             if (!string.IsNullOrEmpty(this.ReportSubtitleLevel1))
             {
-                IRow row = this.Sheet.CreateRow(1);
+                IRow row = this.Sheet.CreateRow(this.Sheet.LastRowNum + 1);
                 ICell cell = row.CreateCell(0);
                 cell.CellStyle =this.CreateCellStyleReportSubtitleLevel1();
-                var cra = new NPOI.SS.Util.CellRangeAddress(1, 1, 0, SettingColumns.Count);
+                var cra = new NPOI.SS.Util.CellRangeAddress(row.RowNum, row.RowNum, 0, this.SettingColumns.Count);
                 cell.SetCellValue(this.ReportSubtitleLevel1);
                 this.Sheet.AddMergedRegion(cra);
             }
             if (!string.IsNullOrEmpty(this.ReportSubtitleLevel2))
             {
-                IRow row = this.Sheet.CreateRow(2);
+                IRow row = this.Sheet.CreateRow(this.Sheet.LastRowNum + 1);
                 ICell cell = row.CreateCell(0);
                 cell.CellStyle = this.CreateCellStyleReportSubtitleLevel2();
-                var cra = new NPOI.SS.Util.CellRangeAddress(2, 2, 0, SettingColumns.Count);
+                var cra = new NPOI.SS.Util.CellRangeAddress(row.RowNum, row.RowNum, 0, this.SettingColumns.Count);
                 cell.SetCellValue(this.ReportSubtitleLevel2);
                 this.Sheet.AddMergedRegion(cra);
             }
@@ -61,7 +61,7 @@ namespace BAExcelExport
             PropertyInfo[] propertyInfos = typeof(TEntity).GetProperties();
 
             // Render Table Header
-            var headerRow = this.Sheet.CreateRow(3);
+            var headerRow = this.Sheet.CreateRow(this.Sheet.LastRowNum+1);
 
             ICellStyle headerCellStyle = this.CreateCellStyleTableHeader();
 
@@ -76,19 +76,17 @@ namespace BAExcelExport
             }
 
             // Render Table Body
-            IRow sheetRow = null;
-
+            
             ICellStyle CellCentertTopAlignment = this.CreateCellStyleTableCell();
 
             string formatPart = string.Empty;
 
             for (int i = 0; i < this.DataSource.Count; i++)
             {
-                sheetRow = this.Sheet.CreateRow((StartLoopRowIndex +1)+i);
+                IRow sheetRow = this.Sheet.CreateRow(this.Sheet.LastRowNum+1);
 
                 for (int j = 0; j < propertyInfos.Length; j++)
                 {
-
                     ICell cellRow = sheetRow.CreateCell(j);
 
                     object cellvalue = propertyInfos[j].GetValue(this.DataSource[i], null);
@@ -98,7 +96,6 @@ namespace BAExcelExport
                         // Kiểm tra giá trị có là số không?
                         if (cellvalue.IsNumeric())
                         {
-                            //cellRow.SetCellValue(string.Format(new CultureInfo("en-US"), "{0:" + formatPart + "}", cellvalue));
                             cellRow.SetCellType(CellType.Numeric);
                             cellRow.SetCellValue(cellvalue.ToString());
                         }

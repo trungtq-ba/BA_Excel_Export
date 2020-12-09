@@ -36,14 +36,10 @@ namespace BAExcelExport
         /// </summary>
         public bool Visible { get; set; }
 
-        public object GroupField { get; set; }
-
-        public object HeaderMerge { get; set; }
-
         /// <summary>
         /// Định dạng cột
         /// </summary>
-        public string Format { get; set; }
+        public string DataFormat { get; set; }
 
         /// <summary>
         /// Độ rộng cột
@@ -51,30 +47,13 @@ namespace BAExcelExport
         public int Width { get; set; }
 
         /// <summary>
-        /// Dữ liệu hiển thị trên Footer
+        /// Công thức của cột
         /// </summary>
-        public object FooterData { get; set; }
-
-        /// <summary>
-        /// Thuộc tính mở rộng
-        /// </summary>
-        public IDictionary<string, object> ExtendedProperties { get; set; }
-
-        /// <summary>
-        /// Lấy dữ liệu từ từ điển mở rộng sao cho an toàn.
-        /// </summary>
-        /// <param name="propertyName"></param>
-        /// <returns></returns>
-        public object GetExtendedProperty(string propertyName)
-        {
-            if (!string.IsNullOrEmpty(propertyName))
-            {
-                if (this.ExtendedProperties != null && this.ExtendedProperties.ContainsKey(propertyName))
-                {
-                    return this.ExtendedProperties[propertyName];
-                }
-            }
-            return null;
-        }
+        /// <Modified>
+        /// Name     Date         Comments
+        /// trungtq  9/12/2020   created
+        /// </Modified>
+        public string Formula { get; set; }
+       
     }
 }
