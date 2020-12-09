@@ -191,6 +191,7 @@ namespace BAExcelExport
             ICellStyle cellStyle = this.Workbook.CreateCellStyle();
             cellStyle.Alignment = hAlign;
             cellStyle.VerticalAlignment = vAlign;
+            cellStyle.WrapText = true;
 
             IFont font = CreateCellFont(fontName, fontSize, isBold);
             cellStyle.SetFont(font);
@@ -210,14 +211,38 @@ namespace BAExcelExport
 
         protected ICellStyle CreateCellStyleReportSubtitleLevel2()
         {
-            return CreateCellStyle(HorizontalAlignment.Center, VerticalAlignment.Center, DefaultFontName, 9f, true);
+            return CreateCellStyle(HorizontalAlignment.Center, VerticalAlignment.Center, DefaultFontName, 9f, false);
+        }
+
+        protected ICellStyle CreateCellStyleTableHeader()
+        {
+            ICellStyle cell = CreateCellStyle(HorizontalAlignment.Center, VerticalAlignment.Center, DefaultFontName, 10f, true);
+
+            cell.BorderBottom = BorderStyle.Thin;
+            cell.BorderRight = BorderStyle.Thin;
+            cell.BorderTop = BorderStyle.Thin;
+            cell.BorderLeft = BorderStyle.Thin;
+
+            return cell;
+        }
+
+        protected ICellStyle CreateCellStyleTableCell()
+        {
+            ICellStyle cell = CreateCellStyle(HorizontalAlignment.Center, VerticalAlignment.Center, DefaultFontName, 9f, false);
+
+            cell.BorderBottom = BorderStyle.Thin;
+            cell.BorderRight = BorderStyle.Thin;
+            cell.BorderTop = BorderStyle.Thin;
+            cell.BorderLeft = BorderStyle.Thin;
+
+            return cell;
         }
 
         protected IFont CreateCellFont(string fontName, double fontSize, bool isBold = false)
         {
             var font = this.Workbook.CreateFont();
             font.IsBold = isBold;
-            font.FontName = "Tahoma";
+            font.FontName = fontName;
             font.FontHeightInPoints = fontSize;
             return font;
         }
