@@ -36,6 +36,14 @@ namespace BAExcelExport
 
         private const string DefaultFontName = "Times New Roman";
 
+        private string DefaultFormatBool = "BOOLEAN";
+
+        private string DefaultFormatInt = "#,##0";
+
+        private string DefaultFormatDouble = "#,##0.###";
+
+        private string DefaultFormatDatetime = "HH:mm:ss dd/MM/yyyy";
+
         private IWorkbook _Workbook = null;
 
         protected IWorkbook Workbook
@@ -105,47 +113,6 @@ namespace BAExcelExport
         /// Ngày báo cáo
         /// </summary>
         protected string ReportSubtitleLevel2 { get; set; }
-
-        private int _StartLoopRowIndex = -1;
-
-        /// <summary>
-        /// Dòng đầu tiên bind dữ liệu bảng
-        /// </summary>
-        protected int StartLoopRowIndex
-        {
-            get
-            {
-                if (_StartLoopRowIndex < 0)
-                {
-                    _StartLoopRowIndex = 0;
-
-                    if (!string.IsNullOrEmpty(ReportTitle))
-                    {
-                        _StartLoopRowIndex += 1;
-                    }
-                    if (!string.IsNullOrEmpty(ReportSubtitleLevel1))
-                    {
-                        _StartLoopRowIndex += 1;
-                    }
-                    if (!string.IsNullOrEmpty(ReportSubtitleLevel2))
-                    {
-                        _StartLoopRowIndex += 1;
-                    }
-                }
-                return _StartLoopRowIndex;
-            }
-        }
-
-        /// <summary>
-        /// Dòng cuối cùng bind dữ liệu bảng
-        /// </summary>
-        protected int EndLoopRowIndex
-        {
-            get
-            {
-                return StartLoopRowIndex + (DataSource != null ? DataSource.Count : 0);
-            }
-        }
 
         protected void ProcessSettingColumns(List<ColumnInfo> columnInfos)
         {
@@ -228,7 +195,61 @@ namespace BAExcelExport
 
         protected ICellStyle CreateCellStyleTableCell()
         {
+            return CreateCellStyleTableCell(string.Empty);
+        }
+
+        protected List<ICellStyle> _ColumnCellStyles = null;
+
+        protected List<ICellStyle> ColumnCellStyles
+        {
+            get
+            {
+                if (_ColumnCellStyles == null)
+                {
+                    _ColumnCellStyles = new List<ICellStyle>();
+
+                    if (this.SettingColumns != null && this.SettingColumns.Count > 0)
+                    {
+                        foreach (var column in this.SettingColumns)
+                        {
+                            // Kiểm tra giá trị có là số không?
+                            if (column.ColumnType == typeof(bool))
+                            {
+                                _ColumnCellStyles.Add(this.CreateCellStyleTableCell(this.DefaultFormatBool));
+                            }
+                            else if (column.ColumnType == typeof(int))
+                            {
+                                _ColumnCellStyles.Add(this.CreateCellStyleTableCell(this.DefaultFormatInt));
+
+                            }
+                            else if (column.ColumnType == typeof(double))
+                            {
+                                _ColumnCellStyles.Add(this.CreateCellStyleTableCell(this.DefaultFormatDouble));
+                            }
+                            else if (column.ColumnType == typeof(DateTime))
+                            {
+                                _ColumnCellStyles.Add(this.CreateCellStyleTableCell(string.IsNullOrEmpty(column.DataFormat) ? this.DefaultFormatDatetime : column.DataFormat));
+                            }
+                            else
+                            {
+                                _ColumnCellStyles.Add(this.CreateCellStyleTableCell());
+                            }
+                        }
+                    }
+                }
+
+                return _ColumnCellStyles;
+            }
+        }
+
+        protected ICellStyle CreateCellStyleTableCell(string format)
+        {
             ICellStyle cell = CreateCellStyle(HorizontalAlignment.Center, VerticalAlignment.Center, DefaultFontName, 9f, false);
+
+            if (!string.IsNullOrEmpty(format))
+            {
+                cell.DataFormat = this.Workbook.CreateDataFormat().GetFormat(format);
+            }
 
             cell.BorderBottom = BorderStyle.Thin;
             cell.BorderRight = BorderStyle.Thin;

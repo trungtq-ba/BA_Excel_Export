@@ -11,7 +11,7 @@ namespace BAExcelExport
     {
         public static string GetFileName(string fileName)
         {
-            return $"{fileName}_{DateTime.Now.ToString("yyyyMMddHHmmss")}.xlsx";
+            return $"{fileName}_{DateTime.Now.ToString("yyyy_MM_dd_HH_mm_ss")}.xlsx";
         }
 
         public static HttpResponseMessage GenerateReport<TEntity>(ReportSourceTemplate<TEntity> template) where TEntity : ReportDataModelBase

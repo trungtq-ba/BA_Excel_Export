@@ -40,7 +40,7 @@ namespace BAExcelExport
             {
                 IRow row = this.Sheet.CreateRow(this.Sheet.LastRowNum + 1);
                 ICell cell = row.CreateCell(0);
-                cell.CellStyle =this.CreateCellStyleReportSubtitleLevel1();
+                cell.CellStyle = this.CreateCellStyleReportSubtitleLevel1();
                 var cra = new NPOI.SS.Util.CellRangeAddress(row.RowNum, row.RowNum, 0, this.SettingColumns.Count);
                 cell.SetCellValue(this.ReportSubtitleLevel1);
                 this.Sheet.AddMergedRegion(cra);
@@ -56,61 +56,74 @@ namespace BAExcelExport
             }
         }
 
+
+
         protected override void RenderBody()
         {
-            PropertyInfo[] propertyInfos = typeof(TEntity).GetProperties();
-
-            // Render Table Header
-            var headerRow = this.Sheet.CreateRow(this.Sheet.LastRowNum+1);
-
-            ICellStyle headerCellStyle = this.CreateCellStyleTableHeader();
-
-            for (var i = 0; i <this.SettingColumns.Count; i++)
+            try
             {
-                var cell = headerRow.CreateCell(i);
-                
-                cell.CellStyle = headerCellStyle;
+                PropertyInfo[] propertyInfos = typeof(TEntity).GetProperties();
 
+                // Render Table Header
+                var headerRow = this.Sheet.CreateRow(this.Sheet.LastRowNum + 1);
 
-                cell.SetCellValue(this.SettingColumns[i].Caption);
-            }
+                ICellStyle headerCellStyle = this.CreateCellStyleTableHeader();
 
-            // Render Table Body
-            
-            ICellStyle CellCentertTopAlignment = this.CreateCellStyleTableCell();
-
-            string formatPart = string.Empty;
-
-            for (int i = 0; i < this.DataSource.Count; i++)
-            {
-                IRow sheetRow = this.Sheet.CreateRow(this.Sheet.LastRowNum+1);
-
-                for (int j = 0; j < propertyInfos.Length; j++)
+                for (var i = 0; i < this.SettingColumns.Count; i++)
                 {
-                    ICell cellRow = sheetRow.CreateCell(j);
+                    var cell = headerRow.CreateCell(i);
+                    cell.CellStyle = headerCellStyle;
+                    cell.SetCellValue(this.SettingColumns[i].Caption);
+                }
 
-                    object cellvalue = propertyInfos[j].GetValue(this.DataSource[i], null);
+                for (int i = 0; i < this.DataSource.Count; i++)
+                {
+                    IRow sheetRow = this.Sheet.CreateRow(this.Sheet.LastRowNum + 1);
 
-                    if (cellvalue != null)
+                    for (int j = 0; j < propertyInfos.Length; j++)
                     {
-                        // Kiểm tra giá trị có là số không?
-                        if (cellvalue.IsNumeric())
+                        ICell cell = sheetRow.CreateCell(j);
+
+                        Type cellType = propertyInfos[j].PropertyType;
+                        object cellvalue = propertyInfos[j].GetValue(this.DataSource[i], null);
+
+                        if (cellvalue != null)
                         {
-                            cellRow.SetCellType(CellType.Numeric);
-                            cellRow.SetCellValue(cellvalue.ToString());
+                            // Kiểm tra giá trị có là số không?
+                            if (cellType == typeof(bool))
+                            {
+                                cell.SetCellValue(Convert.ToBoolean(cellvalue));
+
+                            }
+                            else if (cellType == typeof(int))
+                            {
+                                cell.SetCellValue(Convert.ToInt32(cellvalue));
+                            }
+                            else if (cellType == typeof(double))
+                            {
+                                cell.SetCellValue(Convert.ToDouble(cellvalue));
+                            }
+                            else if (cellType == typeof(DateTime))
+                            {
+                                cell.SetCellValue(Convert.ToDateTime(cellvalue));
+                            }
+                            else
+                            {
+                                cell.SetCellValue(cellvalue.ToString());
+                            }
                         }
                         else
                         {
-                            cellRow.SetCellValue(string.Format("{0:" + formatPart + "}", cellvalue));
+                            cell.SetCellValue(string.Empty);
                         }
-                    }
-                    else
-                    {
-                        cellRow.SetCellValue(string.Empty);
-                    }
 
-                    cellRow.CellStyle = CellCentertTopAlignment;
+                        cell.CellStyle = this.ColumnCellStyles[j];
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+
             }
         }
     }

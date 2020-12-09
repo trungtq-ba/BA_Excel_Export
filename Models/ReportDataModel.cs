@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace BAExcelExport
 {
-    public class ReportDataModel:ReportDataModelBase
+    public class ReportDataModel : ReportDataModelBase
     {
         public int OrderNumber { get; set; }
 
@@ -20,5 +20,7 @@ namespace BAExcelExport
         public double Latitude { get; set; }
 
         public double Longitude { get; set; }
+
+        public DateTime Birthday { get; set; }
     }
 }

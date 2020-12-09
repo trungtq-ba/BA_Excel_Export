@@ -63,7 +63,8 @@ namespace BAExcelExport
                 Address = $"{rnd.Next(1, 100)} {StreetNames[rnd.Next(StreetNames.Length)]}",
                 Age = index,
                 Latitude = rnd.NextDouble(),
-                Longitude = rnd.NextDouble()
+                Longitude = rnd.NextDouble(),
+                Birthday = new DateTime(rnd.Next(1920, 2000), rnd.Next(1, 12), rnd.Next(1, 30))
             }).ToList();
 
         }
