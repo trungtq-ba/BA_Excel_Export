@@ -3,22 +3,19 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Net.Http;
 using System.Threading.Tasks;
-
-// For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
 namespace BAExcelExport.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class ExcelController : ControllerBase
+    public class FluentExcelController : ControllerBase
     {
         private const int MAX_RECORD = 100;
 
         // GET api/Excel/excelExport
         [HttpGet]
-        [Route("excelExport")]
+        [Route("fluentExcelExport")]
         public ActionResult ExcelExport()
         {
             var dataInput = DataHelper.GenerateData(MAX_RECORD);
@@ -46,6 +43,5 @@ namespace BAExcelExport.Controllers
 
             return File(resultContent.Content.ReadAsByteArrayAsync().Result, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", sw.ElapsedMilliseconds + "_" + fileName);
         }
-
     }
 }
