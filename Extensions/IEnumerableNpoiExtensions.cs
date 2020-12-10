@@ -318,9 +318,7 @@ namespace FluentExcel
             if (rowIndex > 1 && fluentConfigEnabled)
             {
                 var statistics = fluentConfig.StatisticsConfigurations;
-                var filterConfigs = fluentConfig.FilterConfigurations;
-                var freezeConfigs = fluentConfig.FreezeConfigurations;
-
+              
                 // statistics row
                 foreach (var item in statistics)
                 {
@@ -339,18 +337,6 @@ namespace FluentExcel
                     }
 
                     rowIndex++;
-                }
-
-                // set the freeze
-                foreach (var freeze in freezeConfigs)
-                {
-                    sheet.CreateFreezePane(freeze.ColSplit, freeze.RowSplit, freeze.LeftMostColumn, freeze.TopRow);
-                }
-
-                // set the auto filter
-                foreach (var filter in filterConfigs)
-                {
-                    sheet.SetAutoFilter(new CellRangeAddress(filter.FirstRow, filter.LastRow ?? rowIndex, filter.FirstCol, filter.LastCol));
                 }
             }
 

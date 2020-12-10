@@ -79,10 +79,8 @@ namespace BAExcelExport.Controllers
         {
             var fc = Excel.Setting.For<Report>();
 
-            fc.HasStatistics("合计", "SUM", 6, 7)
-              .HasFilter(firstColumn: 0, lastColumn: 2, firstRow: 0)
-              .HasFreeze(columnSplit: 2, rowSplit: 1, leftMostColumn: 2, topMostRow: 1);
-
+            fc.HasStatistics("合计", "SUM", 6, 7);
+              
             fc.Property(r => r.City)
               .HasExcelIndex(0)
               .HasExcelTitle("城市")

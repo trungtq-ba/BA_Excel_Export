@@ -16,8 +16,7 @@ namespace FluentExcel
     {
         private Dictionary<string, PropertyConfiguration> _propertyConfigurations;
         private List<StatisticsConfiguration> _statisticsConfigurations;
-        private List<FilterConfiguration> _filterConfigurations;
-        private List<FreezeConfiguration> _freezeConfigurations;
+        
         private RowDataValidator _rowDataValidator;
         private bool _skipInvalidRows;
         private bool _ignoreWhitespaceRows;
@@ -29,8 +28,6 @@ namespace FluentExcel
         {
             _propertyConfigurations = new Dictionary<string, PropertyConfiguration>();
             _statisticsConfigurations = new List<StatisticsConfiguration>();
-            _filterConfigurations = new List<FilterConfiguration>();
-            _freezeConfigurations = new List<FreezeConfiguration>();
         }
 
         /// <summary>
@@ -57,30 +54,7 @@ namespace FluentExcel
             }
         }
 
-        /// <summary>
-        /// Gets the filter configurations.
-        /// </summary>
-        /// <value>The filter config.</value>
-        public IReadOnlyList<FilterConfiguration> FilterConfigurations
-        {
-            get
-            {
-                return _filterConfigurations.AsReadOnly();
-            }
-        }
-
-        /// <summary>
-        /// Gets the freeze configurations.
-        /// </summary>
-        /// <value>The freeze config.</value>
-        public IReadOnlyList<FreezeConfiguration> FreezeConfigurations
-        {
-            get
-            {
-                return _freezeConfigurations.AsReadOnly();
-            }
-        }
-
+        
         /// <summary>
         /// Gets the row data validator.
         /// </summary>
@@ -229,52 +203,7 @@ namespace FluentExcel
             return this;
         }
 
-        /// <summary>
-        /// Configures the excel filter behaviors for the specified <typeparamref name="TModel"/>.
-        /// </summary>
-        /// <returns>The <see cref="FluentConfiguration{TModel}"/>.</returns>
-        /// <param name="firstColumn">The first column index.</param>
-        /// <param name="lastColumn">The last column index.</param>
-        /// <param name="firstRow">The first row index.</param>
-        /// <param name="lastRow">The last row index. If is null, the value is dynamic calculate by code.</param>
-        public FluentConfiguration<TModel> HasFilter(int firstColumn, int lastColumn, int firstRow, int? lastRow = null)
-        {
-            var filter = new FilterConfiguration
-            {
-                FirstCol = firstColumn,
-                FirstRow = firstRow,
-                LastCol = lastColumn,
-                LastRow = lastRow,
-            };
-
-            _filterConfigurations.Add(filter);
-
-            return this;
-        }
-
-        /// <summary>
-        /// Configures the excel freeze behaviors for the specified <typeparamref name="TModel"/>.
-        /// </summary>
-        /// <returns>The <see cref="FluentConfiguration{TModel}"/>.</returns>
-        /// <param name="columnSplit">The column number to split.</param>
-        /// <param name="rowSplit">The row number to split.</param>
-        /// <param name="leftMostColumn">The left most culomn index.</param>
-        /// <param name="topMostRow">The top most row index.</param>
-        public FluentConfiguration<TModel> HasFreeze(int columnSplit, int rowSplit, int leftMostColumn, int topMostRow)
-        {
-            var freeze = new FreezeConfiguration
-            {
-                ColSplit = columnSplit,
-                RowSplit = rowSplit,
-                LeftMostColumn = leftMostColumn,
-                TopRow = topMostRow,
-            };
-
-            _freezeConfigurations.Add(freeze);
-
-            return this;
-        }
-
+        
         /// <summary>
         /// Configures the row data validator which validates each row before adding it to the result list.
         /// </summary>

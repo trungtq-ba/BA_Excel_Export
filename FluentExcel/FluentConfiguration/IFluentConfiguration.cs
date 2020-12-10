@@ -22,18 +22,6 @@ namespace FluentExcel
         IReadOnlyList<StatisticsConfiguration> StatisticsConfigurations { get; }
 
         /// <summary>
-        /// Gets the filter configurations.
-        /// </summary>
-        /// <value>The filter config.</value>
-        IReadOnlyList<FilterConfiguration> FilterConfigurations { get; }
-
-        /// <summary>
-        /// Gets the freeze configurations.
-        /// </summary>
-        /// <value>The freeze config.</value>
-        IReadOnlyList<FreezeConfiguration> FreezeConfigurations { get; }
-
-        /// <summary>
         /// Gets the row data validator.
         /// </summary>
         /// <value>The row data validator.</value>
