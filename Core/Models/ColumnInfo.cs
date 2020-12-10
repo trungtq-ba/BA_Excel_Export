@@ -33,8 +33,9 @@ namespace BAExcelExport
 
         /// <summary>
         /// Cột ẩn hay hiện
+        /// Mặc định: hiện
         /// </summary>
-        public bool Visible { get; set; }
+        public bool Visible { get; set; } = true;
 
         /// <summary>
         /// Định dạng cột
@@ -44,7 +45,7 @@ namespace BAExcelExport
         /// <summary>
         /// Độ rộng cột
         /// </summary>
-        public int Width { get; set; }
+        public int Width { get; set; } = 100;
 
         /// <summary>
         /// Công thức của cột

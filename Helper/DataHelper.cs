@@ -64,7 +64,7 @@ namespace BAExcelExport
                 Age = index,
                 Latitude = rnd.NextDouble(),
                 Longitude = rnd.NextDouble(),
-                Birthday = new DateTime(rnd.Next(1920, 2000), rnd.Next(1, 12), rnd.Next(1, 30))
+                Birthday = new DateTime(rnd.Next(1920, 2000), rnd.Next(1, 12), rnd.Next(1, 28))
             }).ToList();
 
         }

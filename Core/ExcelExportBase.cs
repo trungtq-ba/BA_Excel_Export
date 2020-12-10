@@ -289,6 +289,10 @@ namespace BAExcelExport
         /// </Modified>
         protected virtual void CalculateColumnWidth()
         {
+            this.Sheet.PrintSetup.PaperSize = (short)PaperSize.A4_TRANSVERSE_PAPERSIZE + 1;
+
+            this.Sheet.PrintSetup.Landscape = true;
+
         }
 
         /// <summary>
