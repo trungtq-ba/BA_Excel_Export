@@ -57,8 +57,6 @@ namespace BAExcelExport
             }
         }
 
-
-
         protected override void RenderBody()
         {
             try
@@ -129,7 +127,7 @@ namespace BAExcelExport
 
                         ICell cell = sheetRow.CreateCell(index);
 
-                        cell.CellStyle = this.ColumnCellStyles[j];
+                        cell.CellStyle = this.DicColumnCellStyles[property.Name];
 
                         Type cellType = property.PropertyType.UnwrapNullableType();
 
@@ -178,6 +176,39 @@ namespace BAExcelExport
             catch (Exception ex)
             {
 
+            }
+        }
+
+        /// <summary>
+        /// Render ra Summary của báo cáo
+        /// </summary>
+        /// <Modified>
+        /// Name     Date         Comments
+        /// trungtq  2/12/2020   created
+        /// </Modified>
+        protected override void RenderSummary()
+        {
+            if (this.FluentConfigEnabled)
+            {
+                var statistics = this.FluentConfig.StatisticsConfigurations;
+
+                // statistics row
+                foreach (var item in statistics)
+                {
+                    var lastRow = this.Sheet.CreateRow(this.Sheet.LastRowNum + 1);
+                    var cell = lastRow.CreateCell(0);
+                    cell.CellStyle = this.CreateCellStyleTableHeader();
+                    cell.SetCellValue(item.Name);
+
+                    foreach (var column in item.Columns)
+                    {
+                        ICell cellStatistic = lastRow.CreateCell(column);
+                        cellStatistic.CellStyle = this.CreateCellStyleTableHeader();
+
+                        // set the cell formula
+                        cellStatistic.CellFormula = $"{item.Formula}({GetCellPosition(1, column)}:{GetCellPosition(this.Sheet.LastRowNum - 1, column)})";
+                    }
+                }
             }
         }
     }

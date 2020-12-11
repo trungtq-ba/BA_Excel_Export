@@ -14,12 +14,12 @@ namespace FluentExcel
         /// <summary>
         /// Gets or sets the comany name property of the generated excel file.
         /// </summary>
-        public string Company { get; set; } = "rigofunc (yingtingxu)";
+        public string Company { get; set; } = "CÔNG TY TNHH PHÁT TRIỂN CÔNG NGHỆ ĐIỆN TỬ BÌNH ANH";
 
         /// <summary>
         /// Gets or sets the author property of the generated excel file.
         /// </summary>
-        public string Author { get; set; } = "rigofunc (yingtingxu)";
+        public string Author { get; set; } = "trungtq";
 
         /// <summary>
         /// Gets or sets the subject property of the generated excel file.
@@ -72,7 +72,6 @@ namespace FluentExcel
             cellStyle.Alignment = HorizontalAlignment.Center;
             cellStyle.VerticalAlignment = VerticalAlignment.Center;
 
-            font.Boldweight = (short)FontBoldWeight.Bold;
             cellStyle.SetFont(font);
         }
     }

@@ -56,6 +56,7 @@ namespace BAExcelExport.Controllers
         private static void FluentConfiguration()
         {
             var fc = Excel.Setting.For<ReportDataModel>();
+            //Excel.Setting.AutoSizeColumnsEnabled = false;
 
             fc.HasStatistics("Tổng", "SUM", 4, 5,6);
 

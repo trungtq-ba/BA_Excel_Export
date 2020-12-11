@@ -110,7 +110,31 @@ namespace BAExcelExport
         /// </summary>
         protected List<TEntity> DataSource { get; set; }
 
-        protected List<ColumnInfo> SettingColumns { get; set; }
+        private Dictionary<string, ColumnInfo> _SettingColumns = null;
+
+
+        /// <summary>
+        /// Từ điển cẩu hình
+        /// </summary>
+        /// <value>
+        ///  Key: Tên thuộc tính
+        ///  Value: Đối tượng cấu hình
+        /// </value>
+        /// <Modified>
+        /// Name     Date         Comments
+        /// trungtq  12/11/2020   created
+        /// </Modified>
+        protected Dictionary<string, ColumnInfo> SettingColumns
+        {
+            get
+            {
+                if (_SettingColumns == null)
+                {
+                    _SettingColumns = new Dictionary<string, ColumnInfo>();
+                }
+                return _SettingColumns;
+            }
+        }
 
         protected TSourceTemplate SourceTemplate { get; set; }
 
@@ -133,25 +157,41 @@ namespace BAExcelExport
         {
             if (columnInfos != null && columnInfos.Count > 0)
             {
-                this.SettingColumns = columnInfos;
+                columnInfos.ForEach(item =>
+                {
+                    if (this.SettingColumns.ContainsKey(item.PropertyName))
+                    {
+                        this.SettingColumns.Add(item.PropertyName, item);
+                    }
+                    else
+                    {
+                        this.SettingColumns[item.PropertyName] = item;
+                    }
+                });
             }
             else
             {
-                columnInfos = new List<ColumnInfo>();
-                PropertyInfo[] propertyInfos = typeof(TEntity).GetProperties();
+                // TODO: can static properties or only instance properties?
+                var propertyInfos = typeof(TEntity).GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.GetProperty);
 
                 foreach (PropertyInfo prop in propertyInfos)
                 {
-                    columnInfos.Add(new ColumnInfo()
+                    var columninfo = (new ColumnInfo()
                     {
-                        ColumnName = prop.Name,
-                        Caption = Regex.Replace(prop.Name, "([A-Z])", " $1").Trim(),
-                        ColumnType = Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType
-
+                        PropertyName = prop.Name,
+                        Title = Regex.Replace(prop.Name, "([A-Z])", " $1").Trim(),
+                        Visible = true
                     });
-                }
 
-                this.SettingColumns = columnInfos;
+                    if (this.SettingColumns.ContainsKey(columninfo.PropertyName))
+                    {
+                        this.SettingColumns.Add(columninfo.PropertyName, columninfo);
+                    }
+                    else
+                    {
+                        this.SettingColumns[columninfo.PropertyName] = columninfo;
+                    }
+                }
             }
         }
 
@@ -213,47 +253,50 @@ namespace BAExcelExport
             return CreateCellStyleTableCell(string.Empty);
         }
 
-        protected List<ICellStyle> _ColumnCellStyles = null;
+        protected Dictionary<string,ICellStyle> _DicColumnCellStyles = null;
 
-        protected List<ICellStyle> ColumnCellStyles
+        protected Dictionary<string,ICellStyle> DicColumnCellStyles
         {
             get
             {
-                if (_ColumnCellStyles == null)
+                if (_DicColumnCellStyles == null)
                 {
-                    _ColumnCellStyles = new List<ICellStyle>();
+                    _DicColumnCellStyles = new Dictionary<string, ICellStyle>();
 
-                    if (this.SettingColumns != null && this.SettingColumns.Count > 0)
+                    // TODO: can static properties or only instance properties?
+                    var properties = typeof(TEntity).GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.GetProperty);
+
+                    if (properties !=null && properties.Length>0)
                     {
-                        foreach (var column in this.SettingColumns)
+                        foreach (var item in properties)
                         {
                             // Kiểm tra giá trị có là số không?
-                            if (column.ColumnType == typeof(bool))
+                            if (item.PropertyType == typeof(bool))
                             {
-                                _ColumnCellStyles.Add(this.CreateCellStyleTableCell(this.DefaultFormatBool));
+                                _DicColumnCellStyles.Add(item.Name, this.CreateCellStyleTableCell(this.DefaultFormatBool));
                             }
-                            else if (column.ColumnType == typeof(int))
+                            else if (item.PropertyType == typeof(int))
                             {
-                                _ColumnCellStyles.Add(this.CreateCellStyleTableCell(this.DefaultFormatInt));
+                                _DicColumnCellStyles.Add(item.Name, this.CreateCellStyleTableCell(this.DefaultFormatInt));
 
                             }
-                            else if (column.ColumnType == typeof(double))
+                            else if (item.PropertyType == typeof(double))
                             {
-                                _ColumnCellStyles.Add(this.CreateCellStyleTableCell(this.DefaultFormatDouble));
+                                _DicColumnCellStyles.Add(item.Name, this.CreateCellStyleTableCell(this.DefaultFormatDouble));
                             }
-                            else if (column.ColumnType == typeof(DateTime))
+                            else if (item.PropertyType == typeof(DateTime))
                             {
-                                _ColumnCellStyles.Add(this.CreateCellStyleTableCell(string.IsNullOrEmpty(column.DataFormat) ? this.DefaultFormatDatetime : column.DataFormat));
+                                _DicColumnCellStyles.Add(item.Name, this.CreateCellStyleTableCell( this.DefaultFormatDatetime ));
                             }
                             else
                             {
-                                _ColumnCellStyles.Add(this.CreateCellStyleTableCell());
+                                _DicColumnCellStyles.Add(item.Name, this.CreateCellStyleTableCell());
                             }
                         }
                     }
                 }
 
-                return _ColumnCellStyles;
+                return _DicColumnCellStyles;
             }
         }
 
@@ -283,15 +326,19 @@ namespace BAExcelExport
             return font;
         }
 
-        protected void AutoSizeColumn(bool autosize = false)
+        protected void AutoSizeColumn()
         {
             // It's heavy, it slows down your Excel if you have large data           
-            if (autosize)
+            if (this.ExcelSetting.AutoSizeColumnsEnabled)
             {
                 for (var i = 0; i < SettingColumns.Count; i++)
                 {
                     this.Sheet.AutoSizeColumn(i);
                 }
+            }
+            else
+            {
+
             }
         }
 
@@ -307,7 +354,6 @@ namespace BAExcelExport
             this.Sheet.PrintSetup.PaperSize = (short)PaperSize.A4_TRANSVERSE_PAPERSIZE + 1;
 
             this.Sheet.PrintSetup.Landscape = true;
-
         }
 
         /// <summary>
@@ -317,7 +363,9 @@ namespace BAExcelExport
         /// Name     Date         Comments
         /// trungtq  2/12/2020   created
         /// </Modified>
-        protected virtual void RenderHeader() { }
+        protected virtual void RenderHeader()
+        {
+        }
 
         protected virtual void RenderBody()
         {
@@ -333,28 +381,6 @@ namespace BAExcelExport
         /// </Modified>
         protected virtual void RenderSummary()
         {
-            if (this.FluentConfigEnabled)
-            {
-                var statistics = this.FluentConfig.StatisticsConfigurations;
-
-                // statistics row
-                foreach (var item in statistics)
-                {
-                    var lastRow = this.Sheet.CreateRow(this.Sheet.LastRowNum + 1);
-                    var cell = lastRow.CreateCell(0);
-                    cell.CellStyle = this.CreateCellStyleTableHeader();
-                    cell.SetCellValue(item.Name);
-
-                    foreach (var column in item.Columns)
-                    {
-                        ICell cellStatistic = lastRow.CreateCell(column);
-                        cellStatistic.CellStyle = this.CreateCellStyleTableHeader();
-
-                        // set the cell formula
-                        cellStatistic.CellFormula = $"{item.Formula}({GetCellPosition(1, column)}:{GetCellPosition(this.Sheet.LastRowNum - 1, column)})";
-                    }
-                }
-            }
         }
 
         /// <summary>
@@ -391,7 +417,7 @@ namespace BAExcelExport
 
                 this.RenderFooter();
 
-                this.AutoSizeColumn(this.ExcelSetting.AutoSizeColumnsEnabled);
+                this.AutoSizeColumn();
 
                 // Tính lại độ rộng của cột
                 this.CalculateColumnWidth();
@@ -456,6 +482,13 @@ namespace BAExcelExport
                 // get the property config
                 if (this.FluentConfigEnabled && fluentConfig.PropertyConfigurations.TryGetValue(property.Name, out var pc))
                 {
+                    // Gán Header của cột và gán giá trị ẩn hiện cột.
+                    if (this.SettingColumns.ContainsKey(property.Name))
+                    {
+                        pc.HasExcelTitle(this.SettingColumns[property.Name].Title);
+                        pc.IsExportIgnored = !this.SettingColumns[property.Name].Visible;
+                    }
+
                     if (this.PropertyConfigurations.ContainsKey(property.Name))
                     {
                         this.PropertyConfigurations.Add(property.Name, pc);
@@ -484,7 +517,7 @@ namespace BAExcelExport
 
         }
 
-        private string GetCellPosition(int row, int col)
+        protected string GetCellPosition(int row, int col)
         {
             col = Convert.ToInt32('A') + col;
             row = row + 1;

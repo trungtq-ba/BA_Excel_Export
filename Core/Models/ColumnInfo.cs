@@ -5,31 +5,29 @@ using System.Threading.Tasks;
 
 namespace BAExcelExport
 {
+
     /// <summary>
-    /// Thông tin cột cần lấy
+    /// Thông tin cột mà client phải truyền cho API để export Excel
+    /// Nếu null hoặc không truyền xuống thì phía API sẽ lấy theo mặc định
     /// </summary>
+    /// <Modified>
+    /// Name     Date         Comments
+    /// trungtq  11/12/2020   created
+    /// </Modified>
     [Serializable]
     public class ColumnInfo
     {
         /// <summary>
-        /// Thứ tự của cột khi export
+        /// Tên của thuộc tính của đối tượng trả về từ API, dùng để mapping khi binding lại tiêu đề
+        /// Nếu tên thuộc tính không trùng với tên thuộc tính phía Excel thì sẽ không mapping được
         /// </summary>
-        public int ColumnIndex { get; set; }
+        public string PropertyName { get; set; }
 
         /// <summary>
-        /// Tên của cột, trùng với tên của thuộc tính
+        /// Tiêu đề của cột khi export ra file Excel, Dịch theo culture của user trước khi truyền xuống
+        /// Dựa vào PropertyName để mapping khi xuất excel, nếu không mappig được thì nó sẽ lấy theo tên thuộc tính phía Server (Tiếng Anh)
         /// </summary>
-        public string ColumnName { get; set; }
-
-        /// <summary>
-        /// Kiểu dữ liệu của cột cần export
-        /// </summary>
-        public Type ColumnType { get; set; }
-
-        /// <summary>
-        /// Nhãn hiển thị trên header
-        /// </summary>
-        public string Caption { get; set; }
+        public string Title { get; set; }
 
         /// <summary>
         /// Cột ẩn hay hiện
@@ -37,24 +35,13 @@ namespace BAExcelExport
         /// </summary>
         public bool Visible { get; set; } = true;
 
-        /// <summary>
-        /// Định dạng cột
-        /// </summary>
-        public string DataFormat { get; set; }
+        public ColumnInfo() { }
 
-        /// <summary>
-        /// Độ rộng cột
-        /// </summary>
-        public int Width { get; set; } = 100;
-
-        /// <summary>
-        /// Công thức của cột
-        /// </summary>
-        /// <Modified>
-        /// Name     Date         Comments
-        /// trungtq  9/12/2020   created
-        /// </Modified>
-        public string Formula { get; set; }
-       
+        public ColumnInfo(string propertyName, string title, bool visible)
+        {
+            this.PropertyName = propertyName;
+            this.Title = title;
+            this.Visible = visible;
+        }
     }
 }
