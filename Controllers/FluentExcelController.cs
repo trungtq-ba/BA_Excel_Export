@@ -54,12 +54,10 @@ namespace BAExcelExport.Controllers
                 };
             }
 
-            // save to excel file with multiple sheets based on expression
-            var data = reports.ToExcelContent("BAGPS", int.MaxValue, true);
-
+           
             HttpResponseMessage response = new HttpResponseMessage(HttpStatusCode.OK)
             {
-                Content = new ByteArrayContent(data)
+                Content = new ByteArrayContent(null)
             };
 
             response.Content.Headers.ContentType = new MediaTypeHeaderValue("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
@@ -84,7 +82,9 @@ namespace BAExcelExport.Controllers
             fc.Property(r => r.City)
               .HasExcelIndex(0)
               .HasExcelTitle("城市")
-              .IsMergeEnabled();
+              .IsMergeEnabled()
+              .HasDataFormatter("");
+               
 
             // or
             //fc.Property(r => r.City).HasExcelCell(0,"城市", allowMerge: true);

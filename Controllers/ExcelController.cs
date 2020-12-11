@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using FluentExcel;
+using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -14,13 +15,15 @@ namespace BAExcelExport.Controllers
     [ApiController]
     public class ExcelController : ControllerBase
     {
-        private const int MAX_RECORD = 100;
+        private const int MAX_RECORD = 1000;
 
         // GET api/Excel/excelExport
         [HttpGet]
         [Route("excelExport")]
         public ActionResult ExcelExport()
         {
+            FluentConfiguration();
+
             var dataInput = DataHelper.GenerateData(MAX_RECORD);
 
 
@@ -47,5 +50,51 @@ namespace BAExcelExport.Controllers
             return File(resultContent.Content.ReadAsByteArrayAsync().Result, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", sw.ElapsedMilliseconds + "_" + fileName);
         }
 
+        /// <summary>
+        /// Use fluent configuration api. (doesn't poison your POCO)
+        /// </summary>
+        private static void FluentConfiguration()
+        {
+            var fc = Excel.Setting.For<ReportDataModel>();
+
+            fc.HasStatistics("Tổng", "SUM", 4, 5,6);
+
+            fc.Property(r => r.OrderNumber)
+              .HasExcelIndex(0)
+              .HasExcelTitle("STT")
+              .IsMergeEnabled();
+
+            fc.Property(r => r.Name)
+              .HasExcelIndex(1)
+              .HasExcelTitle("Tên")
+              .IsMergeEnabled();
+
+            fc.Property(r => r.DisplayName)
+              .HasExcelIndex(7)
+              .HasExcelTitle("Tên đầy đủ")
+              .IsIgnored(exportingIsIgnored: false, importingIsIgnored: true);
+
+            fc.Property(r => r.Birthday)
+              .HasExcelIndex(2)
+              .HasExcelTitle("Ngày sinh")
+              .HasDataFormatter("dd/MM/yyyy");
+
+
+            fc.Property(r => r.Address)
+              .HasExcelIndex(3)
+              .HasExcelTitle("Địa chỉ");
+
+            fc.Property(r => r.Age)
+              .HasExcelIndex(4)
+              .HasExcelTitle("Tuổi");
+
+            fc.Property(r => r.Latitude)
+              .HasExcelIndex(5)
+              .HasExcelTitle("Vĩ độ");
+
+            fc.Property(r => r.Longitude)
+              .HasExcelIndex(6)
+              .HasExcelTitle("Kinh Độ");
+        }
     }
 }

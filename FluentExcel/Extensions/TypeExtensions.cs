@@ -45,6 +45,21 @@ namespace FluentExcel
                    || (type == typeof(char));
         }
 
+        /// <summary>
+        /// Determines the specified type is integer type.
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        public static bool IsDouble(this Type type)
+        {
+            type = type.UnwrapNullableType();
+
+            return (type == typeof(decimal))
+                   || (type == typeof(double))
+                   || (type == typeof(float)
+                   );
+        }
+
         public static object GetDefaultValue(this Type type)
         {
             if (!type.GetTypeInfo().IsValueType)

@@ -1,7 +1,10 @@
-﻿using NPOI.SS.UserModel;
+﻿using FluentExcel;
+using NPOI.SS.UserModel;
+using NPOI.SS.Util;
 using NPOI.XSSF.UserModel;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -44,6 +47,10 @@ namespace BAExcelExport
 
         private string DefaultFormatDatetime = "HH:mm:ss dd/MM/yyyy";
 
+        private ExcelSetting ExcelSetting = Excel.Setting;
+
+        private static IFormulaEvaluator _formulaEvaluator;
+
         private IWorkbook _Workbook = null;
 
         protected IWorkbook Workbook
@@ -52,7 +59,15 @@ namespace BAExcelExport
             {
                 if (_Workbook == null)
                 {
-                    _Workbook = new XSSFWorkbook();
+                    var workbook = new XSSFWorkbook();
+
+                    _formulaEvaluator = new XSSFFormulaEvaluator(workbook);
+                    var props = workbook.GetProperties();
+                    props.CoreProperties.Creator = ExcelSetting.Author;
+                    props.CoreProperties.Subject = ExcelSetting.Subject;
+                    props.ExtendedProperties.GetUnderlyingProperties().Company = ExcelSetting.Company;
+
+                    _Workbook = workbook;
                 }
                 return _Workbook;
             }
@@ -318,7 +333,28 @@ namespace BAExcelExport
         /// </Modified>
         protected virtual void RenderSummary()
         {
+            if (this.FluentConfigEnabled)
+            {
+                var statistics = this.FluentConfig.StatisticsConfigurations;
 
+                // statistics row
+                foreach (var item in statistics)
+                {
+                    var lastRow = this.Sheet.CreateRow(this.Sheet.LastRowNum + 1);
+                    var cell = lastRow.CreateCell(0);
+                    cell.CellStyle = this.CreateCellStyleTableHeader();
+                    cell.SetCellValue(item.Name);
+
+                    foreach (var column in item.Columns)
+                    {
+                        ICell cellStatistic = lastRow.CreateCell(column);
+                        cellStatistic.CellStyle = this.CreateCellStyleTableHeader();
+
+                        // set the cell formula
+                        cellStatistic.CellFormula = $"{item.Formula}({GetCellPosition(1, column)}:{GetCellPosition(this.Sheet.LastRowNum - 1, column)})";
+                    }
+                }
+            }
         }
 
         /// <summary>
@@ -345,6 +381,8 @@ namespace BAExcelExport
             HttpResponseMessage response = null;
             try
             {
+                this.PrepareFluentConfiguration();
+
                 this.RenderHeader();
 
                 this.RenderBody();
@@ -353,7 +391,7 @@ namespace BAExcelExport
 
                 this.RenderFooter();
 
-                this.AutoSizeColumn(true);
+                this.AutoSizeColumn(this.ExcelSetting.AutoSizeColumnsEnabled);
 
                 // Tính lại độ rộng của cột
                 this.CalculateColumnWidth();
@@ -375,6 +413,82 @@ namespace BAExcelExport
 
             }
             return response;
+        }
+
+        private IDictionary<string, PropertyConfiguration> _PropertyConfigurations = null;
+
+        protected IDictionary<string, PropertyConfiguration> PropertyConfigurations
+        {
+            get
+            {
+                if (_PropertyConfigurations == null)
+                {
+                    _PropertyConfigurations = new Dictionary<string, PropertyConfiguration>();
+                }
+                return _PropertyConfigurations;
+            }
+        }
+
+        protected bool FluentConfigEnabled { get; set; } = false;
+
+        protected IFluentConfiguration FluentConfig { get; set; } = null;
+
+        protected virtual void PrepareFluentConfiguration()
+        {
+            // TODO: can static properties or only instance properties?
+            var properties = typeof(TEntity).GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.GetProperty);
+
+            // get the fluent config
+            if (this.ExcelSetting.FluentConfigs.TryGetValue(typeof(TEntity), out var fluentConfig))
+            {
+                this.FluentConfigEnabled = true;
+
+                // adjust the auto index.
+                (fluentConfig as FluentConfiguration<TEntity>)?.AdjustAutoIndex();
+
+                this.FluentConfig = fluentConfig as FluentConfiguration<TEntity>;
+            }
+
+            for (var i = 0; i < properties.Length; i++)
+            {
+                var property = properties[i];
+
+                // get the property config
+                if (this.FluentConfigEnabled && fluentConfig.PropertyConfigurations.TryGetValue(property.Name, out var pc))
+                {
+                    if (this.PropertyConfigurations.ContainsKey(property.Name))
+                    {
+                        this.PropertyConfigurations.Add(property.Name, pc);
+                    }
+                    else
+                    {
+                        this.PropertyConfigurations[property.Name] = pc;
+                    }
+
+                }
+                else
+                {
+                    this.PropertyConfigurations.Add(property.Name, null);
+                }
+            }
+        }
+
+        protected virtual void ProcessMergeCell()
+        {
+            // merge cells
+            var mergableConfigs = this.PropertyConfigurations.Values.Where(c => c != null && c.AllowMerge).ToList();
+            if (mergableConfigs.Any())
+            {
+
+            }
+
+        }
+
+        private string GetCellPosition(int row, int col)
+        {
+            col = Convert.ToInt32('A') + col;
+            row = row + 1;
+            return ((char)col) + row.ToString();
         }
     }
 }

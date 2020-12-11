@@ -1,4 +1,5 @@
-﻿using NPOI.SS.UserModel;
+﻿using FluentExcel;
+using NPOI.SS.UserModel;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -62,44 +63,99 @@ namespace BAExcelExport
         {
             try
             {
-                PropertyInfo[] propertyInfos = typeof(TEntity).GetProperties();
+                // TODO: can static properties or only instance properties?
+                PropertyInfo[] propertyInfos = typeof(TEntity).GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.GetProperty);
 
                 // Render Table Header
                 var headerRow = this.Sheet.CreateRow(this.Sheet.LastRowNum + 1);
 
                 ICellStyle headerCellStyle = this.CreateCellStyleTableHeader();
 
-                for (var i = 0; i < this.SettingColumns.Count; i++)
+                for (var i = 0; i < propertyInfos.Length; i++)
                 {
-                    var cell = headerRow.CreateCell(i);
+                    var property = propertyInfos[i];
+
+                    var config = this.PropertyConfigurations[property.Name];
+
+                    // Mặc định: tiêu đề cột là tên thuộc tính của đối tượng.
+                    var title = propertyInfos[i].Name;
+
+                    int index = i;
+                    if (config != null)
+                    {
+                        // Lấy giá trị title
+                        if (!string.IsNullOrEmpty(config.Title))
+                        {
+                            title = config.Title;
+                        }
+
+                        // Nếu không cần export cột này thì next đến cột khác
+                        if (config.IsExportIgnored) continue;
+
+                        index = config.Index;
+
+                        if (index < 0)
+                            throw new Exception($"The excel cell index value cannot be less then '0' for the property: {property.Name}, see HasExcelIndex(int index) methods for more informations.");
+                    }
+
+                    var cell = headerRow.CreateCell(index);
                     cell.CellStyle = headerCellStyle;
-                    cell.SetCellValue(this.SettingColumns[i].Caption);
+                    cell.SetCellValue(title);
                 }
 
+                // Duyệt và binding dữ liệu
                 for (int i = 0; i < this.DataSource.Count; i++)
                 {
                     IRow sheetRow = this.Sheet.CreateRow(this.Sheet.LastRowNum + 1);
 
                     for (int j = 0; j < propertyInfos.Length; j++)
                     {
-                        ICell cell = sheetRow.CreateCell(j);
+                        var property = propertyInfos[j];
 
-                        Type cellType = propertyInfos[j].PropertyType;
-                        object cellvalue = propertyInfos[j].GetValue(this.DataSource[i], null);
+                        var config = this.PropertyConfigurations[property.Name];
+
+                        int index = j;
+
+                        if (config != null)
+                        {
+                            // Nếu không cần export cột này thì next đến cột khác
+                            if (config.IsExportIgnored) continue;
+
+                            index = config.Index;
+
+                            if (index < 0)
+                                throw new Exception($"The excel cell index value cannot be less then '0' for the property: {property.Name}, see HasExcelIndex(int index) methods for more informations.");
+                        }
+
+                        ICell cell = sheetRow.CreateCell(index);
+
+                        cell.CellStyle = this.ColumnCellStyles[j];
+
+                        Type cellType = property.PropertyType.UnwrapNullableType();
+
+                        object cellvalue = property.GetValue(this.DataSource[i], null);
 
                         if (cellvalue != null)
                         {
+                            if (!string.IsNullOrEmpty(config?.Formatter) && cellvalue is IFormattable fv)
+                            {
+                                // the formatter isn't excel supported formatter, but it's a C# formatter.
+                                // The result is the Excel cell data type become String.
+                                cell.SetCellValue(fv.ToString(config.Formatter, CultureInfo.CurrentCulture));
+
+                                continue;
+                            }
+
                             // Kiểm tra giá trị có là số không?
                             if (cellType == typeof(bool))
                             {
                                 cell.SetCellValue(Convert.ToBoolean(cellvalue));
-
                             }
-                            else if (cellType == typeof(int))
+                            else if (cellType.IsInteger())
                             {
                                 cell.SetCellValue(Convert.ToInt32(cellvalue));
                             }
-                            else if (cellType == typeof(double))
+                            else if (cellType.IsDouble())
                             {
                                 cell.SetCellValue(Convert.ToDouble(cellvalue));
                             }
@@ -116,8 +172,6 @@ namespace BAExcelExport
                         {
                             cell.SetCellValue(string.Empty);
                         }
-
-                        cell.CellStyle = this.ColumnCellStyles[j];
                     }
                 }
             }
