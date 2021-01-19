@@ -14,15 +14,18 @@ namespace BAExcelExport.Controllers
     [ApiController]
     public class ExcelController : ControllerBase
     {
-        private const int MAX_RECORD = 1000;
+        static ExcelController()
+        {
+            FluentConfiguration();
+        }
+
+        private const int MAX_RECORD = 100;
 
         // GET api/Excel/excelExport
         [HttpGet]
         [Route("excelExport")]
         public ActionResult ExcelExport()
         {
-            FluentConfiguration();
-
             var dataInput = DataHelper.GenerateData(MAX_RECORD);
 
             List<ColumnInfo> settings = new List<ColumnInfo>()
@@ -30,7 +33,7 @@ namespace BAExcelExport.Controllers
                 new ColumnInfo(){ ColumnName="OrderNumber",Caption="STT", Format="",Visible=true,Width=100},
                 new ColumnInfo(){ ColumnName="Name",Caption="Tên", Format="",Visible=true,Width=100},
                 new ColumnInfo(){ ColumnName="DisplayName",Caption="Tên hiển thị", Format="",Visible=true,Width=100},
-                new ColumnInfo(){ ColumnName="Address",Caption="Địa chỉ", Format="",Visible=false,Width=100},
+                new ColumnInfo(){ ColumnName="Address",Caption="Địa chỉ", Format="",Visible=true,Width=100},
                 new ColumnInfo(){ ColumnName="Age",Caption="Tuổi", Format="",Visible=true,Width=100},
                 new ColumnInfo(){ ColumnName="Latitude",Caption="Kinh độ", Format="",Visible=true,Width=100},
                 new ColumnInfo(){ ColumnName="Longitude",Caption="Vĩ độ", Format="",Visible=true,Width=100},
@@ -66,9 +69,10 @@ namespace BAExcelExport.Controllers
         private static void FluentConfiguration()
         {
             var fc = Excel.Setting.For<ReportDataModel>();
-            //Excel.Setting.AutoSizeColumnsEnabled = false;
+            
+            Excel.Setting.AutoSizeColumnsEnabled = true;
 
-            fc.HasStatistics("Tổng", "SUM", 4, 5, 6);
+            fc.HasStatistics("Tổng", "SUM", 5,6,7);
 
             fc.Property(r => r.OrderNumber)
               .HasExcelIndex(0)

@@ -462,14 +462,18 @@ namespace BAExcelExport
             // It's heavy, it slows down your Excel if you have large data           
             if (this.ExcelSetting.AutoSizeColumnsEnabled)
             {
-                for (var i = 0; i < SettingColumns.Count; i++)
+                for (var i = 0; i < this.SettingColumns.Count; i++)
                 {
                     this.Sheet.AutoSizeColumn(i);
                 }
             }
             else
             {
-
+                // Duyệt qua và xử lý tất cả các cột cần ẩn.
+                foreach (var pc in this.PropertyConfigurations)
+                {
+                    this.Sheet.SetColumnWidth(pc.Value.Index, 1000);
+                }
             }
         }
 
@@ -536,10 +540,10 @@ namespace BAExcelExport
         protected virtual void ProcessVisibleColumn()
         {
             // Nếu có cột nào ẩn mới xử lý, không thì bỏ qua.
-            if(this.PropertyConfigurations.Values.Any(v =>v.IsExportIgnored == true))
+            if (this.PropertyConfigurations.Values.Any(v => v.IsExportIgnored == true))
             {
                 // Duyệt qua và xử lý tất cả các cột cần ẩn.
-               foreach(var pc in this.PropertyConfigurations)
+                foreach (var pc in this.PropertyConfigurations)
                 {
                     if (pc.Value.IsExportIgnored)
                     {
@@ -573,10 +577,10 @@ namespace BAExcelExport
 
                 this.AutoSizeColumn();
 
+                this.ProcessVisibleColumn();
+
                 // Tính lại độ rộng của cột
                 this.CalculateColumnWidth();
-
-                this.ProcessVisibleColumn();
 
                 using (var memoryStream = new MemoryStream())
                 {

@@ -202,15 +202,20 @@ namespace BAExcelExport
                 // statistics row
                 foreach (var item in statistics)
                 {
-                    var lastRow = this.Sheet.CreateRow(this.Sheet.LastRowNum + 1);
-                    var cell = lastRow.CreateCell(0);
-                    cell.CellStyle = this.CreateCellStyleTableHeader();
+                    var statisticRow = this.Sheet.CopyRow(this.Sheet.LastRowNum, this.Sheet.LastRowNum + 1);
+
+                    foreach(var c in statisticRow.Cells)
+                    {
+                        c.SetCellValue(string.Empty);
+                    }
+
+                    var cell = statisticRow.Cells[0];
+                    cell.CellStyle  = this.CreateCellStyleTableHeader();
                     cell.SetCellValue(item.Name);
 
                     foreach (var column in item.Columns)
                     {
-                        ICell cellStatistic = lastRow.CreateCell(column);
-                        cellStatistic.CellStyle = this.CreateCellStyleTableHeader();
+                        ICell cellStatistic = statisticRow.Cells[column];
 
                         // set the cell formula
                         cellStatistic.CellFormula = $"{item.Formula}({GetCellPosition(1, column)}:{GetCellPosition(this.Sheet.LastRowNum - 1, column)})";
