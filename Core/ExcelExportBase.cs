@@ -47,6 +47,14 @@ namespace BAExcelExport
 
         private string DefaultFormatDatetime = "HH:mm:ss dd/MM/yyyy";
 
+        protected PropertyInfo[] EntityProperties
+        {
+            get
+            {
+                return typeof(TEntity).GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.GetProperty);
+            }
+        }
+
         private ExcelSetting ExcelSetting = Excel.Setting;
 
         private static IFormulaEvaluator _formulaEvaluator;
@@ -112,7 +120,6 @@ namespace BAExcelExport
 
         private Dictionary<string, ColumnInfo> _SettingColumns = null;
 
-
         /// <summary>
         /// Từ điển cẩu hình
         /// </summary>
@@ -159,13 +166,13 @@ namespace BAExcelExport
             {
                 columnInfos.ForEach(item =>
                 {
-                    if (this.SettingColumns.ContainsKey(item.PropertyName))
+                    if (this.SettingColumns.ContainsKey(item.ColumnName))
                     {
-                        this.SettingColumns.Add(item.PropertyName, item);
+                        this.SettingColumns.Add(item.ColumnName, item);
                     }
                     else
                     {
-                        this.SettingColumns[item.PropertyName] = item;
+                        this.SettingColumns[item.ColumnName] = item;
                     }
                 });
             }
@@ -178,20 +185,38 @@ namespace BAExcelExport
                 {
                     var columninfo = (new ColumnInfo()
                     {
-                        PropertyName = prop.Name,
-                        Title = Regex.Replace(prop.Name, "([A-Z])", " $1").Trim(),
+                        ColumnName = prop.Name,
+                        Caption = Regex.Replace(prop.Name, "([A-Z])", " $1").Trim(),
                         Visible = true
                     });
 
-                    if (this.SettingColumns.ContainsKey(columninfo.PropertyName))
+                    if (this.SettingColumns.ContainsKey(columninfo.ColumnName))
                     {
-                        this.SettingColumns.Add(columninfo.PropertyName, columninfo);
+                        this.SettingColumns.Add(columninfo.ColumnName, columninfo);
                     }
                     else
                     {
-                        this.SettingColumns[columninfo.PropertyName] = columninfo;
+                        this.SettingColumns[columninfo.ColumnName] = columninfo;
                     }
                 }
+            }
+        }
+
+        /// <summary>
+        /// Đếm số cột được phép hiện
+        /// </summary>
+        /// <value>
+        /// The visible column count.
+        /// </value>
+        /// <Modified>
+        /// Name     Date         Comments
+        /// trungtq  19/1/2021   created
+        /// </Modified>
+        protected int VisibleSettingColumnCount
+        {
+            get
+            {
+                return this.SettingColumns.Where(item => item.Value.Visible).Count();
             }
         }
 
@@ -253,9 +278,9 @@ namespace BAExcelExport
             return CreateCellStyleTableCell(string.Empty);
         }
 
-        protected Dictionary<string,ICellStyle> _DicColumnCellStyles = null;
+        protected Dictionary<string, ICellStyle> _DicColumnCellStyles = null;
 
-        protected Dictionary<string,ICellStyle> DicColumnCellStyles
+        protected Dictionary<string, ICellStyle> DicColumnCellStyles
         {
             get
             {
@@ -266,7 +291,7 @@ namespace BAExcelExport
                     // TODO: can static properties or only instance properties?
                     var properties = typeof(TEntity).GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.GetProperty);
 
-                    if (properties !=null && properties.Length>0)
+                    if (properties != null && properties.Length > 0)
                     {
                         foreach (var item in properties)
                         {
@@ -286,7 +311,7 @@ namespace BAExcelExport
                             }
                             else if (item.PropertyType == typeof(DateTime))
                             {
-                                _DicColumnCellStyles.Add(item.Name, this.CreateCellStyleTableCell( this.DefaultFormatDatetime ));
+                                _DicColumnCellStyles.Add(item.Name, this.CreateCellStyleTableCell(this.DefaultFormatDatetime));
                             }
                             else
                             {
@@ -324,6 +349,105 @@ namespace BAExcelExport
             font.FontName = fontName;
             font.FontHeightInPoints = fontSize;
             return font;
+        }
+
+        private IDictionary<string, PropertyConfiguration> _PropertyConfigurations = null;
+
+        /// <summary>
+        /// Từ điển chưa thông tin cấu kình
+        /// Key: Tên của thuộc tính/cột
+        /// Value: giá trị cấu hình
+        /// </summary>
+        /// <Modified>
+        /// Name     Date         Comments
+        /// trungtq  19/1/2021   created
+        /// </Modified>
+        protected IDictionary<string, PropertyConfiguration> PropertyConfigurations
+        {
+            get
+            {
+                if (_PropertyConfigurations == null)
+                {
+                    _PropertyConfigurations = new Dictionary<string, PropertyConfiguration>();
+                }
+                return _PropertyConfigurations;
+            }
+        }
+
+        /// <summary>
+        /// Có sử dụng cấu hình không?, mặc định là có
+        /// </summary>
+        /// <Modified>
+        /// Name     Date         Comments
+        /// trungtq  19/1/2021   created
+        /// </Modified>
+        protected bool FluentConfigEnabled { get; set; } = false;
+
+        protected IFluentConfiguration FluentConfig { get; set; } = null;
+
+        protected virtual void PrepareFluentConfiguration()
+        {
+            // TODO: can static properties or only instance properties?
+            var properties = this.EntityProperties;
+
+            // get the fluent config
+            if (this.ExcelSetting.FluentConfigs.TryGetValue(typeof(TEntity), out var fluentConfig))
+            {
+                this.FluentConfigEnabled = true;
+
+                // adjust the auto index.
+                (fluentConfig as FluentConfiguration<TEntity>)?.AdjustAutoIndex();
+
+                this.FluentConfig = fluentConfig as FluentConfiguration<TEntity>;
+            }
+
+            for (var i = 0; i < properties.Length; i++)
+            {
+                var property = properties[i];
+
+                // get the property config
+                if (this.FluentConfigEnabled && fluentConfig.PropertyConfigurations.TryGetValue(property.Name, out var pc))
+                {
+                    // Gán Header của cột và gán giá trị ẩn hiện cột.
+                    if (this.SettingColumns.ContainsKey(property.Name))
+                    {
+                        pc.HasExcelTitle(this.SettingColumns[property.Name].Caption);
+                        pc.IsExportIgnored = !this.SettingColumns[property.Name].Visible;
+                    }
+
+                    if (this.PropertyConfigurations.ContainsKey(property.Name))
+                    {
+                        this.PropertyConfigurations.Add(property.Name, pc);
+                    }
+                    else
+                    {
+                        this.PropertyConfigurations[property.Name] = pc;
+                    }
+
+                }
+                else
+                {
+                    this.PropertyConfigurations.Add(property.Name, null);
+                }
+            }
+        }
+
+        protected virtual void ProcessMergeCell()
+        {
+            // merge cells
+            var mergableConfigs = this.PropertyConfigurations.Values.Where(c => c != null && c.AllowMerge).ToList();
+            if (mergableConfigs.Any())
+            {
+
+            }
+
+        }
+
+        protected string GetCellPosition(int row, int col)
+        {
+            col = Convert.ToInt32('A') + col;
+            row = row + 1;
+            return ((char)col) + row.ToString();
         }
 
         protected void AutoSizeColumn()
@@ -396,6 +520,29 @@ namespace BAExcelExport
         }
 
         /// <summary>
+        /// Xử lý ẩn hiện cột.
+        /// </summary>
+        /// <Modified>
+        /// Name     Date         Comments
+        /// trungtq  19/1/2021   created
+        /// </Modified>
+        protected virtual void ProcessVisibleColumn()
+        {
+            // Nếu có cột nào ẩn mới xử lý, không thì bỏ qua.
+            if(this.PropertyConfigurations.Values.Any(v =>v.IsExportIgnored == true))
+            {
+                // Duyệt qua và xử lý tất cả các cột cần ẩn.
+               foreach(var pc in this.PropertyConfigurations)
+                {
+                    if (pc.Value.IsExportIgnored)
+                    {
+                        this.Sheet.SetColumnHidden(pc.Value.Index, true);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
         /// Render ra toàn bộ báo cáo.
         /// </summary>
         /// <Modified>
@@ -422,6 +569,8 @@ namespace BAExcelExport
                 // Tính lại độ rộng của cột
                 this.CalculateColumnWidth();
 
+                this.ProcessVisibleColumn();
+
                 using (var memoryStream = new MemoryStream())
                 {
                     this.Workbook.Write(memoryStream);
@@ -439,89 +588,6 @@ namespace BAExcelExport
 
             }
             return response;
-        }
-
-        private IDictionary<string, PropertyConfiguration> _PropertyConfigurations = null;
-
-        protected IDictionary<string, PropertyConfiguration> PropertyConfigurations
-        {
-            get
-            {
-                if (_PropertyConfigurations == null)
-                {
-                    _PropertyConfigurations = new Dictionary<string, PropertyConfiguration>();
-                }
-                return _PropertyConfigurations;
-            }
-        }
-
-        protected bool FluentConfigEnabled { get; set; } = false;
-
-        protected IFluentConfiguration FluentConfig { get; set; } = null;
-
-        protected virtual void PrepareFluentConfiguration()
-        {
-            // TODO: can static properties or only instance properties?
-            var properties = typeof(TEntity).GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.GetProperty);
-
-            // get the fluent config
-            if (this.ExcelSetting.FluentConfigs.TryGetValue(typeof(TEntity), out var fluentConfig))
-            {
-                this.FluentConfigEnabled = true;
-
-                // adjust the auto index.
-                (fluentConfig as FluentConfiguration<TEntity>)?.AdjustAutoIndex();
-
-                this.FluentConfig = fluentConfig as FluentConfiguration<TEntity>;
-            }
-
-            for (var i = 0; i < properties.Length; i++)
-            {
-                var property = properties[i];
-
-                // get the property config
-                if (this.FluentConfigEnabled && fluentConfig.PropertyConfigurations.TryGetValue(property.Name, out var pc))
-                {
-                    // Gán Header của cột và gán giá trị ẩn hiện cột.
-                    if (this.SettingColumns.ContainsKey(property.Name))
-                    {
-                        pc.HasExcelTitle(this.SettingColumns[property.Name].Title);
-                        pc.IsExportIgnored = !this.SettingColumns[property.Name].Visible;
-                    }
-
-                    if (this.PropertyConfigurations.ContainsKey(property.Name))
-                    {
-                        this.PropertyConfigurations.Add(property.Name, pc);
-                    }
-                    else
-                    {
-                        this.PropertyConfigurations[property.Name] = pc;
-                    }
-
-                }
-                else
-                {
-                    this.PropertyConfigurations.Add(property.Name, null);
-                }
-            }
-        }
-
-        protected virtual void ProcessMergeCell()
-        {
-            // merge cells
-            var mergableConfigs = this.PropertyConfigurations.Values.Where(c => c != null && c.AllowMerge).ToList();
-            if (mergableConfigs.Any())
-            {
-
-            }
-
-        }
-
-        protected string GetCellPosition(int row, int col)
-        {
-            col = Convert.ToInt32('A') + col;
-            row = row + 1;
-            return ((char)col) + row.ToString();
         }
     }
 }

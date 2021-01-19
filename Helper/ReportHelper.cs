@@ -18,7 +18,7 @@ namespace BAExcelExport
             HttpResponseMessage response = null;
             try
             {
-                ExcelExportNoTemplate<ReportSourceTemplate<TEntity>, TEntity> report = new ExcelExportNoTemplate<ReportSourceTemplate<TEntity>, TEntity>(template);
+                ExcelExportTable<ReportSourceTemplate<TEntity>, TEntity> report = new ExcelExportTable<ReportSourceTemplate<TEntity>, TEntity>(template);
 
                 response = report.RenderReport();
 

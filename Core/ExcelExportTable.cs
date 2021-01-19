@@ -17,12 +17,11 @@ namespace BAExcelExport
     /// Name     Date         Comments
     /// trungtq  9/12/2020   created
     /// </Modified>
-    public class ExcelExportNoTemplate<TSourceTemplate, TEntity> : ExcelExportBase<TSourceTemplate, TEntity>
+    public class ExcelExportTable<TSourceTemplate, TEntity> : ExcelExportBase<TSourceTemplate, TEntity>
             where TSourceTemplate : ReportSourceTemplate<TEntity>
             where TEntity : ReportDataModelBase
     {
-
-        public ExcelExportNoTemplate(TSourceTemplate template) : base(template)
+        public ExcelExportTable(TSourceTemplate template) : base(template)
         {
         }
 
@@ -34,7 +33,7 @@ namespace BAExcelExport
                 ICell cell = row.CreateCell(0);
                 cell.CellStyle = this.CreateCellStyleReportTitle();
                 cell.SetCellValue(this.ReportTitle);
-                var cra = new NPOI.SS.Util.CellRangeAddress(0, 0, 0, this.SettingColumns.Count);
+                var cra = new NPOI.SS.Util.CellRangeAddress(0, 0, 0, this.VisibleSettingColumnCount);
                 this.Sheet.AddMergedRegion(cra);
             }
             if (!string.IsNullOrEmpty(this.ReportSubtitleLevel1))
@@ -42,7 +41,7 @@ namespace BAExcelExport
                 IRow row = this.Sheet.CreateRow(this.Sheet.LastRowNum + 1);
                 ICell cell = row.CreateCell(0);
                 cell.CellStyle = this.CreateCellStyleReportSubtitleLevel1();
-                var cra = new NPOI.SS.Util.CellRangeAddress(row.RowNum, row.RowNum, 0, this.SettingColumns.Count);
+                var cra = new NPOI.SS.Util.CellRangeAddress(row.RowNum, row.RowNum, 0, this.VisibleSettingColumnCount);
                 cell.SetCellValue(this.ReportSubtitleLevel1);
                 this.Sheet.AddMergedRegion(cra);
             }
@@ -51,7 +50,7 @@ namespace BAExcelExport
                 IRow row = this.Sheet.CreateRow(this.Sheet.LastRowNum + 1);
                 ICell cell = row.CreateCell(0);
                 cell.CellStyle = this.CreateCellStyleReportSubtitleLevel2();
-                var cra = new NPOI.SS.Util.CellRangeAddress(row.RowNum, row.RowNum, 0, this.SettingColumns.Count);
+                var cra = new NPOI.SS.Util.CellRangeAddress(row.RowNum, row.RowNum, 0, this.VisibleSettingColumnCount);
                 cell.SetCellValue(this.ReportSubtitleLevel2);
                 this.Sheet.AddMergedRegion(cra);
             }
@@ -62,7 +61,7 @@ namespace BAExcelExport
             try
             {
                 // TODO: can static properties or only instance properties?
-                PropertyInfo[] propertyInfos = typeof(TEntity).GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.GetProperty);
+                PropertyInfo[] propertyInfos = this.EntityProperties;
 
                 // Render Table Header
                 var headerRow = this.Sheet.CreateRow(this.Sheet.LastRowNum + 1);
@@ -87,17 +86,18 @@ namespace BAExcelExport
                             title = config.Title;
                         }
 
-                        // Nếu không cần export cột này thì next đến cột khác
-                        if (config.IsExportIgnored) continue;
-
                         index = config.Index;
 
                         if (index < 0)
+                        {
                             throw new Exception($"The excel cell index value cannot be less then '0' for the property: {property.Name}, see HasExcelIndex(int index) methods for more informations.");
+                        }
                     }
 
                     var cell = headerRow.CreateCell(index);
                     cell.CellStyle = headerCellStyle;
+
+                    // Gán giá trị cho Header
                     cell.SetCellValue(title);
                 }
 
@@ -116,54 +116,61 @@ namespace BAExcelExport
 
                         if (config != null)
                         {
-                            // Nếu không cần export cột này thì next đến cột khác
-                            if (config.IsExportIgnored) continue;
-
                             index = config.Index;
 
                             if (index < 0)
+                            {
                                 throw new Exception($"The excel cell index value cannot be less then '0' for the property: {property.Name}, see HasExcelIndex(int index) methods for more informations.");
+                            }
                         }
 
                         ICell cell = sheetRow.CreateCell(index);
 
                         cell.CellStyle = this.DicColumnCellStyles[property.Name];
 
-                        Type cellType = property.PropertyType.UnwrapNullableType();
-
-                        object cellvalue = property.GetValue(this.DataSource[i], null);
-
-                        if (cellvalue != null)
+                        // Nếu cần export cột này thì mới gán giá trị
+                        if (!config.IsExportIgnored)
                         {
-                            if (!string.IsNullOrEmpty(config?.Formatter) && cellvalue is IFormattable fv)
-                            {
-                                // the formatter isn't excel supported formatter, but it's a C# formatter.
-                                // The result is the Excel cell data type become String.
-                                cell.SetCellValue(fv.ToString(config.Formatter, CultureInfo.CurrentCulture));
+                            Type cellType = property.PropertyType.UnwrapNullableType();
 
-                                continue;
-                            }
+                            object cellvalue = property.GetValue(this.DataSource[i], null);
 
-                            // Kiểm tra giá trị có là số không?
-                            if (cellType == typeof(bool))
+                            if (cellvalue != null)
                             {
-                                cell.SetCellValue(Convert.ToBoolean(cellvalue));
-                            }
-                            else if (cellType.IsInteger())
-                            {
-                                cell.SetCellValue(Convert.ToInt32(cellvalue));
-                            }
-                            else if (cellType.IsDouble())
-                            {
-                                cell.SetCellValue(Convert.ToDouble(cellvalue));
-                            }
-                            else if (cellType == typeof(DateTime))
-                            {
-                                cell.SetCellValue(Convert.ToDateTime(cellvalue));
+                                if (!string.IsNullOrEmpty(config?.Formatter) && cellvalue is IFormattable fv)
+                                {
+                                    // the formatter isn't excel supported formatter, but it's a C# formatter.
+                                    // The result is the Excel cell data type become String.
+                                    cell.SetCellValue(fv.ToString(config.Formatter, CultureInfo.CurrentCulture));
+
+                                    continue;
+                                }
+
+                                // Kiểm tra giá trị có là số không?
+                                if (cellType == typeof(bool))
+                                {
+                                    cell.SetCellValue(Convert.ToBoolean(cellvalue));
+                                }
+                                else if (cellType.IsInteger())
+                                {
+                                    cell.SetCellValue(Convert.ToInt32(cellvalue));
+                                }
+                                else if (cellType.IsDouble())
+                                {
+                                    cell.SetCellValue(Convert.ToDouble(cellvalue));
+                                }
+                                else if (cellType == typeof(DateTime))
+                                {
+                                    cell.SetCellValue(Convert.ToDateTime(cellvalue));
+                                }
+                                else
+                                {
+                                    cell.SetCellValue(cellvalue.ToString());
+                                }
                             }
                             else
                             {
-                                cell.SetCellValue(cellvalue.ToString());
+                                cell.SetCellValue(string.Empty);
                             }
                         }
                         else

@@ -24,7 +24,7 @@ namespace FluentExcel
         /// <summary>
         /// Gets or sets the subject property of the generated excel file.
         /// </summary>
-        public string Subject { get; set; } = "The extensions of NPOI, which provides IEnumerable<T> has save to and load from excel functionalities.";
+        public string Subject { get; set; } = "PPM";
 
         /// <summary>
         /// Gets or sets a value indicating whether to use *.xlsx file extension.

@@ -7,7 +7,6 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 
-// For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
 namespace BAExcelExport.Controllers
 {
@@ -26,6 +25,17 @@ namespace BAExcelExport.Controllers
 
             var dataInput = DataHelper.GenerateData(MAX_RECORD);
 
+            List<ColumnInfo> settings = new List<ColumnInfo>()
+            {
+                new ColumnInfo(){ ColumnName="OrderNumber",Caption="STT", Format="",Visible=true,Width=100},
+                new ColumnInfo(){ ColumnName="Name",Caption="Tên", Format="",Visible=true,Width=100},
+                new ColumnInfo(){ ColumnName="DisplayName",Caption="Tên hiển thị", Format="",Visible=true,Width=100},
+                new ColumnInfo(){ ColumnName="Address",Caption="Địa chỉ", Format="",Visible=false,Width=100},
+                new ColumnInfo(){ ColumnName="Age",Caption="Tuổi", Format="",Visible=true,Width=100},
+                new ColumnInfo(){ ColumnName="Latitude",Caption="Kinh độ", Format="",Visible=true,Width=100},
+                new ColumnInfo(){ ColumnName="Longitude",Caption="Vĩ độ", Format="",Visible=true,Width=100},
+                new ColumnInfo(){ ColumnName="Birthday",Caption="Ngày sinh", Format="",Visible=true,Width=100}
+            };
 
             ReportSourceTemplate<ReportDataModel> template = new ReportSourceTemplate<ReportDataModel>()
             {
@@ -33,7 +43,7 @@ namespace BAExcelExport.Controllers
                 ReportSubtitleLevel1 = "TIÊU ĐỀ CON CỦA BÁO CÁO DANH SÁCH ĐIỂM",
                 ReportSubtitleLevel2 = "MÔ TẢ CỦA BÁO CÁO DANH SÁCH ĐIỂM",
                 FileName = typeof(ReportDataModel).Name,
-                SettingColumns = null,
+                SettingColumns = settings,
                 ReportList = dataInput
             };
 
@@ -58,7 +68,7 @@ namespace BAExcelExport.Controllers
             var fc = Excel.Setting.For<ReportDataModel>();
             //Excel.Setting.AutoSizeColumnsEnabled = false;
 
-            fc.HasStatistics("Tổng", "SUM", 4, 5,6);
+            fc.HasStatistics("Tổng", "SUM", 4, 5, 6);
 
             fc.Property(r => r.OrderNumber)
               .HasExcelIndex(0)
@@ -71,30 +81,29 @@ namespace BAExcelExport.Controllers
               .IsMergeEnabled();
 
             fc.Property(r => r.DisplayName)
-              .HasExcelIndex(7)
+              .HasExcelIndex(2)
               .HasExcelTitle("Tên đầy đủ")
               .IsIgnored(exportingIsIgnored: false, importingIsIgnored: true);
 
             fc.Property(r => r.Birthday)
-              .HasExcelIndex(2)
+              .HasExcelIndex(3)
               .HasExcelTitle("Ngày sinh")
               .HasDataFormatter("dd/MM/yyyy");
 
-
             fc.Property(r => r.Address)
-              .HasExcelIndex(3)
+              .HasExcelIndex(4)
               .HasExcelTitle("Địa chỉ");
 
             fc.Property(r => r.Age)
-              .HasExcelIndex(4)
+              .HasExcelIndex(5)
               .HasExcelTitle("Tuổi");
 
             fc.Property(r => r.Latitude)
-              .HasExcelIndex(5)
+              .HasExcelIndex(6)
               .HasExcelTitle("Vĩ độ");
 
             fc.Property(r => r.Longitude)
-              .HasExcelIndex(6)
+              .HasExcelIndex(7)
               .HasExcelTitle("Kinh Độ");
         }
     }
