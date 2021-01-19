@@ -61,7 +61,15 @@ namespace BAExcelExport
 
         public string FileName { get; set; }
 
+        /// <summary>
+        /// Tên Sheet Excel
+        /// </summary>
         public string SheetName { get; set; }
+
+        /// <summary>
+        /// Có xoay ngang hay dọc
+        /// </summary>
+        public bool  Landscape { get; set; }
 
         public string FileTemplatePath { get; set; }
 

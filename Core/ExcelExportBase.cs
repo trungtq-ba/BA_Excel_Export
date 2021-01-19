@@ -472,7 +472,7 @@ namespace BAExcelExport
                 // Duyệt qua và xử lý tất cả các cột cần ẩn.
                 foreach (var pc in this.PropertyConfigurations)
                 {
-                    this.Sheet.SetColumnWidth(pc.Value.Index, 1000);
+                    this.Sheet.SetColumnWidth(pc.Value.Index, this.SettingColumns[pc.Key].Width * 256);
                 }
             }
         }
@@ -483,12 +483,12 @@ namespace BAExcelExport
         /// <Modified>
         /// Name     Date         Comments
         /// trungtq  27/02/2015   created
-        /// </Modified>
+        /// </Modified> 
         protected virtual void CalculateColumnWidth()
         {
-            this.Sheet.PrintSetup.PaperSize = (short)PaperSize.A4_TRANSVERSE_PAPERSIZE + 1;
+            this.Sheet.PrintSetup.PaperSize = (short)PaperSize.A4;
 
-            this.Sheet.PrintSetup.Landscape = true;
+            this.Sheet.PrintSetup.Landscape = this.SourceTemplate.Landscape;
         }
 
         /// <summary>

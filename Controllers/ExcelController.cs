@@ -30,18 +30,20 @@ namespace BAExcelExport.Controllers
 
             List<ColumnInfo> settings = new List<ColumnInfo>()
             {
-                new ColumnInfo(){ ColumnName="OrderNumber",Caption="STT", Format="",Visible=true,Width=100},
-                new ColumnInfo(){ ColumnName="Name",Caption="Tên", Format="",Visible=true,Width=100},
-                new ColumnInfo(){ ColumnName="DisplayName",Caption="Tên hiển thị", Format="",Visible=true,Width=100},
-                new ColumnInfo(){ ColumnName="Address",Caption="Địa chỉ", Format="",Visible=true,Width=100},
-                new ColumnInfo(){ ColumnName="Age",Caption="Tuổi", Format="",Visible=true,Width=100},
-                new ColumnInfo(){ ColumnName="Latitude",Caption="Kinh độ", Format="",Visible=true,Width=100},
-                new ColumnInfo(){ ColumnName="Longitude",Caption="Vĩ độ", Format="",Visible=true,Width=100},
-                new ColumnInfo(){ ColumnName="Birthday",Caption="Ngày sinh", Format="HH:mm:ss dd-MM-yyyy",Visible=true,Width=100}
+                new ColumnInfo(){ ColumnName="OrderNumber",Caption="STT", Format="",Visible=true,Width=10},
+                new ColumnInfo(){ ColumnName="Name",Caption="Tên", Format="",Visible=true,Width=20},
+                new ColumnInfo(){ ColumnName="DisplayName",Caption="Tên hiển thị", Format="",Visible=true,Width=20},
+                new ColumnInfo(){ ColumnName="Address",Caption="Địa chỉ", Format="",Visible=true,Width=30},
+                new ColumnInfo(){ ColumnName="Age",Caption="Tuổi", Format="",Visible=true,Width=20},
+                new ColumnInfo(){ ColumnName="Latitude",Caption="Kinh độ", Format="",Visible=true,Width=10},
+                new ColumnInfo(){ ColumnName="Longitude",Caption="Vĩ độ", Format="",Visible=true,Width=10},
+                new ColumnInfo(){ ColumnName="Birthday",Caption="Ngày sinh", Format="HH:mm:ss dd-MM-yyyy",Visible=true,Width=20}
             };
 
             ReportSourceTemplate<ReportDataModel> template = new ReportSourceTemplate<ReportDataModel>()
             {
+                Landscape =true,
+                SheetName="ReportLandmarks",
                 ReportTitle = "BÁO CÁO DANH SÁCH ĐIỂM",
                 ReportSubtitleLevel1 = "TIÊU ĐỀ CON CỦA BÁO CÁO DANH SÁCH ĐIỂM",
                 ReportSubtitleLevel2 = "MÔ TẢ CỦA BÁO CÁO DANH SÁCH ĐIỂM",
@@ -69,10 +71,10 @@ namespace BAExcelExport.Controllers
         private static void FluentConfiguration()
         {
             var fc = Excel.Setting.For<ReportDataModel>();
-            
-            Excel.Setting.AutoSizeColumnsEnabled = true;
 
-            fc.HasStatistics("Tổng", "SUM", 5,6,7);
+            Excel.Setting.AutoSizeColumnsEnabled = false;
+
+            fc.HasStatistics("Tổng", "SUM", 5, 6, 7);
 
             fc.Property(r => r.OrderNumber)
               .HasExcelIndex(0)
