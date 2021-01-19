@@ -179,7 +179,7 @@ namespace BAExcelExport
             else
             {
                 // TODO: can static properties or only instance properties?
-                var propertyInfos = typeof(TEntity).GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.GetProperty);
+                var propertyInfos = this.EntityProperties;
 
                 foreach (PropertyInfo prop in propertyInfos)
                 {
@@ -289,7 +289,7 @@ namespace BAExcelExport
                     _DicColumnCellStyles = new Dictionary<string, ICellStyle>();
 
                     // TODO: can static properties or only instance properties?
-                    var properties = typeof(TEntity).GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.GetProperty);
+                    var properties = this.EntityProperties;
 
                     if (properties != null && properties.Length > 0)
                     {
@@ -390,7 +390,7 @@ namespace BAExcelExport
             // TODO: can static properties or only instance properties?
             var properties = this.EntityProperties;
 
-            // get the fluent config
+            // Lấy thông tin từ fluent config
             if (this.ExcelSetting.FluentConfigs.TryGetValue(typeof(TEntity), out var fluentConfig))
             {
                 this.FluentConfigEnabled = true;
@@ -401,11 +401,12 @@ namespace BAExcelExport
                 this.FluentConfig = fluentConfig as FluentConfiguration<TEntity>;
             }
 
+            // Duyệt qua các thuộc tính và truyền giá trị từ cấu hình xuống cho fluent config
             for (var i = 0; i < properties.Length; i++)
             {
                 var property = properties[i];
 
-                // get the property config
+                // Lấy thông tin từ fluent config
                 if (this.FluentConfigEnabled && fluentConfig.PropertyConfigurations.TryGetValue(property.Name, out var pc))
                 {
                     // Gán Header của cột và gán giá trị ẩn hiện cột.
@@ -413,6 +414,12 @@ namespace BAExcelExport
                     {
                         pc.HasExcelTitle(this.SettingColumns[property.Name].Caption);
                         pc.IsExportIgnored = !this.SettingColumns[property.Name].Visible;
+
+                        // Lấy cấu hình truyền vào từ ColumnInfo.
+                        if (!string.IsNullOrEmpty(this.SettingColumns[property.Name].Format))
+                        {
+                            pc.HasDataFormatter(this.SettingColumns[property.Name].Format);
+                        }
                     }
 
                     if (this.PropertyConfigurations.ContainsKey(property.Name))

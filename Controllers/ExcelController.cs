@@ -34,7 +34,7 @@ namespace BAExcelExport.Controllers
                 new ColumnInfo(){ ColumnName="Age",Caption="Tuổi", Format="",Visible=true,Width=100},
                 new ColumnInfo(){ ColumnName="Latitude",Caption="Kinh độ", Format="",Visible=true,Width=100},
                 new ColumnInfo(){ ColumnName="Longitude",Caption="Vĩ độ", Format="",Visible=true,Width=100},
-                new ColumnInfo(){ ColumnName="Birthday",Caption="Ngày sinh", Format="",Visible=true,Width=100}
+                new ColumnInfo(){ ColumnName="Birthday",Caption="Ngày sinh", Format="HH:mm:ss dd-MM-yyyy",Visible=true,Width=100}
             };
 
             ReportSourceTemplate<ReportDataModel> template = new ReportSourceTemplate<ReportDataModel>()
